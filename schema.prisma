@@ -1,0 +1,89 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-id"
+}
+
+enum UserType {
+  Admin
+  Staff
+  Student
+}
+
+enum Status {
+  Active
+  Inactive
+  Alumni
+  SuperSenior
+}
+
+model User {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  password   String
+  userType   UserType
+  tagAccess  String   // 'Dean', 'HR', 'HOD', 'Mentor', 'Advisor', 'CR', 'Student'
+  deptId     String?
+  status     Status   @default(Active)
+  createdAt  DateTime @default(now())
+  
+  staffProfile   StaffProfile?
+  studentProfile StudentProfile?
+}
+
+model StaffProfile {
+  staffId      String   @id
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id])
+  name         String
+  phone        String?
+  salary       Float?   // Restricted to HR/Principal
+  doj          DateTime @default(now())
+  deptId       String
+  
+  mentees      StudentProfile[] @relation("MentorRelation")
+  advisedBatch StudentProfile[] @relation("AdvisorRelation")
+}
+
+model StudentProfile {
+  regNo          String   @id
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id])
+  name           String
+  batchId        String
+  profileLocked  Boolean  @default(false)
+  
+  mentorId       String?
+  mentor         StaffProfile? @relation("MentorRelation", fields: [mentorId], references: [staffId])
+  
+  advisorId      String?
+  advisor        StaffProfile? @relation("AdvisorRelation", fields: [advisorId], references: [staffId])
+  
+  admissionType  String   // 'Counseling', 'Management'
+  marks          PermanentMark[]
+  arrears        ArrearTransit[]
+}
+
+model PermanentMark {
+  id           Int      @id @default(autoincrement())
+  regNo        String
+  student      StudentProfile @relation(fields: [regNo], references: [regNo])
+  subjectCode  String
+  semester     Int
+  mark         Int
+  passedYear   Int
+}
+
+model ArrearTransit {
+  id           Int      @id @default(autoincrement())
+  regNo        String
+  student      StudentProfile @relation(fields: [regNo], references: [regNo])
+  subjectCode  String
+  originalSem  Int
+  latestMark   Int
+  attempts     Int      @default(1)
+  isCleared    Boolean  @default(false)
+}

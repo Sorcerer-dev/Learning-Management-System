@@ -13,7 +13,10 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-    origin: ['http://localhost:5173', 'https://b5402f937cb07143-1-39-132-70.serveousercontent.com'],
+    origin: [
+        'http://localhost:5173',
+        'https://papaya-narwhal-a90224.netlify.app',
+    ],
 }));
 
 // Middleware to skip ngrok browser warning

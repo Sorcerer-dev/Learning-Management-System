@@ -15,15 +15,8 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({
     origin: [
         'http://localhost:5173',
-        'https://papaya-narwhal-a90224.netlify.app',
     ],
 }));
-
-// Middleware to skip ngrok browser warning
-app.use((req, res, next) => {
-    res.setHeader('ngrok-skip-browser-warning', 'true');
-    next();
-});
 
 app.use(express.json());
 

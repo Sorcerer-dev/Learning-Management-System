@@ -1,6 +1,6 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { useTheme } from '../../context/ThemeContext';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/ThemeContext';
 import {
     Users,
     BookOpen,
@@ -12,8 +12,14 @@ import {
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
-    const { role } = useTheme();
+    const { role, logout } = useAuth();
     const location = useLocation();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login', { replace: true });
+    };
 
     const getNavLinks = () => {
         switch (role) {
@@ -28,7 +34,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 return [
                     { name: 'Dashboard', path: '/hr', icon: <BarChart3 className="w-5 h-5" /> },
                     { name: 'Staff Management', path: '/hr/staff', icon: <Users className="w-5 h-5" /> },
-                    { name: 'Bulk Upload', path: '/hr/students', icon: <GraduationCap className="w-5 h-5" /> },
+                    { name: 'Student Onboarding', path: '/hr/students', icon: <GraduationCap className="w-5 h-5" /> },
                 ];
             case 'staff':
                 return [
@@ -43,7 +49,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                     { name: 'Dashboard', path: '/student', icon: <BarChart3 className="w-5 h-5" /> },
                     { name: 'My Attendance', path: '/student/attendance', icon: <CalendarCheck className="w-5 h-5" /> },
                     { name: 'Results', path: '/student/results', icon: <BookOpen className="w-5 h-5" /> },
-                    { name: 'First Login', path: '/student/first-login', icon: <Settings className="w-5 h-5" /> },
+                    { name: 'Settings', path: '/student/settings', icon: <Settings className="w-5 h-5" /> },
                 ];
         }
     };
@@ -87,7 +93,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             </div>
 
             <div className="p-4 border-t border-white/10 shrink-0">
-                <button className="flex items-center space-x-3 px-4 py-3 w-full rounded-lg hover:bg-white/10 text-white/80 hover:text-white transition-colors">
+                <button
+                    onClick={handleLogout}
+                    className="flex items-center space-x-3 px-4 py-3 w-full rounded-lg hover:bg-red-500/20 text-white/80 hover:text-white transition-colors"
+                >
                     <LogOut className="w-5 h-5" />
                     <span>Logout</span>
                 </button>

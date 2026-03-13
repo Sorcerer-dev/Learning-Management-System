@@ -1,7 +1,33 @@
-import React from 'react';
-import { Users, BookOpen, GraduationCap, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Users, BookOpen, GraduationCap, AlertTriangle, Loader2 } from 'lucide-react';
+import { useAuth } from '../../context/ThemeContext';
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const AdminDashboard = () => {
+    const { token } = useAuth();
+    const [stats, setStats] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/stats/dashboard`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setStats(data);
+                }
+            } catch (err) {
+                console.error('Failed to fetch stats:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchStats();
+    }, [token]);
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -13,10 +39,31 @@ const AdminDashboard = () => {
 
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard title="Total Students" value="4,208" icon={<Users className="w-5 h-5 text-primary" />} trend="+2% from last year" />
-                <StatCard title="Total Staff" value="312" icon={<BookOpen className="w-5 h-5 text-primary" />} />
-                <StatCard title="Avg Pass Percentage" value="84.2%" icon={<GraduationCap className="w-5 h-5 text-primary" />} trend="Up 1.5%" />
-                <StatCard title="Red Flags (Arrears)" value="89" icon={<AlertTriangle className="w-5 h-5 text-destructive" />} className="border-l-4 border-l-destructive" />
+                <StatCard
+                    title="Total Students"
+                    value={loading ? '...' : (stats?.totalStudents?.toLocaleString() ?? '0')}
+                    icon={<Users className="w-5 h-5 text-primary" />}
+                    loading={loading}
+                />
+                <StatCard
+                    title="Total Staff"
+                    value={loading ? '...' : (stats?.totalStaff?.toLocaleString() ?? '0')}
+                    icon={<BookOpen className="w-5 h-5 text-primary" />}
+                    loading={loading}
+                />
+                <StatCard
+                    title="Active Students"
+                    value={loading ? '...' : (stats?.activeStudents?.toLocaleString() ?? '0')}
+                    icon={<GraduationCap className="w-5 h-5 text-primary" />}
+                    loading={loading}
+                />
+                <StatCard
+                    title="Active Arrears"
+                    value={loading ? '...' : (stats?.totalArrears?.toLocaleString() ?? '0')}
+                    icon={<AlertTriangle className="w-5 h-5 text-destructive" />}
+                    className="border-l-4 border-l-destructive"
+                    loading={loading}
+                />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -30,14 +77,7 @@ const AdminDashboard = () => {
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h2 className="text-lg font-semibold mb-4 text-gray-800">Pending Deletion Approvals</h2>
                     <div className="space-y-4">
-                        <div className="p-4 border rounded-lg bg-orange-50 border-orange-100 flex items-start justify-between">
-                            <div>
-                                <p className="font-medium text-sm text-gray-900">Batch 2021-25 Records</p>
-                                <p className="text-xs text-gray-500 mt-1">Requested by HR Admin</p>
-                            </div>
-                            <button className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded font-medium">Review</button>
-                        </div>
-                        <div className="text-sm text-gray-500 text-center py-4">No more requests</div>
+                        <div className="text-sm text-gray-500 text-center py-4">No pending requests</div>
                     </div>
                 </div>
             </div>
@@ -45,15 +85,18 @@ const AdminDashboard = () => {
     );
 };
 
-const StatCard = ({ title, value, icon, trend, className = '' }) => (
+const StatCard = ({ title, value, icon, className = '', loading }) => (
     <div className={`bg-white p-6 rounded-xl shadow-sm border border-gray-200 ${className}`}>
         <div className="flex items-center justify-between mb-4">
             <h3 className="text-gray-500 text-sm font-medium">{title}</h3>
             <div className="p-2 bg-primary/10 rounded-lg">{icon}</div>
         </div>
         <div className="flex items-baseline space-x-2">
-            <h2 className="text-3xl font-bold text-gray-900">{value}</h2>
-            {trend && <span className="text-xs font-medium text-green-600">{trend}</span>}
+            {loading ? (
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            ) : (
+                <h2 className="text-3xl font-bold text-gray-900">{value}</h2>
+            )}
         </div>
     </div>
 );

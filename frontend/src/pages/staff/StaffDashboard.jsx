@@ -1,7 +1,12 @@
-import React from 'react';
-import { ClipboardList, Users, MessageSquare } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ClipboardList, Users, MessageSquare, Loader2, Inbox } from 'lucide-react';
+import { useAuth } from '../../context/ThemeContext';
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const StaffDashboard = () => {
+    const { user, token } = useAuth();
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -13,47 +18,24 @@ const StaffDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatCard title="Total Mentees" value="18" icon={<Users className="w-5 h-5 text-primary" />} />
-                <StatCard title="Classes Today" value="3" icon={<ClipboardList className="w-5 h-5 text-primary" />} />
-                <StatCard title="Pending Counseling Logs" value="2" icon={<MessageSquare className="w-5 h-5 text-primary" />} className="border-l-4 border-l-yellow-400" />
+                <StatCard title="Total Mentees" value="—" icon={<Users className="w-5 h-5 text-primary" />} />
+                <StatCard title="Classes Today" value="—" icon={<ClipboardList className="w-5 h-5 text-primary" />} />
+                <StatCard title="Pending Counseling Logs" value="—" icon={<MessageSquare className="w-5 h-5 text-primary" />} className="border-l-4 border-l-yellow-400" />
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200">
                 <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
                     <h2 className="text-lg font-semibold text-gray-800">Today's Classes & Attendance</h2>
                 </div>
-                <div className="p-6">
-                    <div className="space-y-4">
-                        <ClassRow time="09:00 AM" subject="CS401: Data Structures" batch="CSE - 2nd Year" status="pending" />
-                        <ClassRow time="11:15 AM" subject="CS405: Algorithms" batch="CSE - 2nd Year" status="marked" />
-                        <ClassRow time="02:00 PM" subject="Lab: Data Structures" batch="CSE - 2nd Year Lab A" status="pending" />
-                    </div>
+                <div className="p-12 flex flex-col items-center justify-center text-center">
+                    <Inbox className="w-12 h-12 text-slate-300 mb-4" />
+                    <p className="text-slate-500 font-medium">No classes scheduled yet.</p>
+                    <p className="text-sm text-slate-400 mt-1">Class schedules will appear here once configured by the HOD.</p>
                 </div>
             </div>
         </div>
     );
 };
-
-const ClassRow = ({ time, subject, batch, status }) => (
-    <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50 transition-colors">
-        <div className="flex items-center space-x-4">
-            <div className="text-sm font-bold text-gray-500 w-20">{time}</div>
-            <div>
-                <p className="font-semibold text-gray-900">{subject}</p>
-                <p className="text-xs text-gray-500">{batch}</p>
-            </div>
-        </div>
-        <div>
-            {status === 'marked' ? (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Marked
-                </span>
-            ) : (
-                <button className="text-sm text-primary font-medium hover:underline">Take Attendance →</button>
-            )}
-        </div>
-    </div>
-);
 
 const StatCard = ({ title, value, icon, className = '' }) => (
     <div className={`bg-white p-6 rounded-xl shadow-sm border border-gray-200 ${className}`}>

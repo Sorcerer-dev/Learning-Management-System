@@ -1,9 +1,9 @@
 import React from 'react';
-import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/ThemeContext';
 import { Menu, Bell, Search, UserCircle } from 'lucide-react';
 
 const Navbar = ({ toggleSidebar }) => {
-    const { role } = useTheme();
+    const { role, user } = useAuth();
 
     const getRoleDisplayName = () => {
         switch (role) {
@@ -49,7 +49,7 @@ const Navbar = ({ toggleSidebar }) => {
                 {/* User Profile */}
                 <div className="flex items-center pl-4 border-l border-gray-200">
                     <div className="hidden md:block mr-3 text-right">
-                        <p className="text-sm font-semibold text-gray-700 leading-tight">Demo User</p>
+                        <p className="text-sm font-semibold text-gray-700 leading-tight">{user?.name || 'User'}</p>
                         <div className="flex items-center justify-end mt-0.5">
                             <span className="w-2 h-2 rounded-full bg-primary mr-1.5 shadow-sm"></span>
                             <p className="text-xs text-gray-500 capitalize font-medium">{getRoleDisplayName()}</p>
@@ -63,3 +63,4 @@ const Navbar = ({ toggleSidebar }) => {
 };
 
 export default Navbar;
+

@@ -15,6 +15,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({
     origin: [
         'http://localhost:5173',
+        'https://learning-management-system-puce-seven.vercel.app',
     ],
 }));
 

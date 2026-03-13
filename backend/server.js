@@ -12,12 +12,26 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
+const allowedOrigins = [
+    'http://localhost:5173',
+    'https://learning-management-system-puce-seven.vercel.app',
+];
+
 app.use(cors({
-    origin: [
-        'http://localhost:5173',
-        'https://learning-management-system-puce-seven.vercel.app',
-    ],
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin) return callback(null, true);
+        // Allow any Vercel preview deployments
+        if (origin.endsWith('.vercel.app') || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
 }));
+
+// Explicitly handle preflight OPTIONS requests
+app.options('*', cors());
 
 app.use(express.json());
 

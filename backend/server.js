@@ -21,6 +21,12 @@ app.use(cors({
     origin: function (origin, callback) {
         // Allow requests with no origin (like mobile apps or curl)
         if (!origin) return callback(null, true);
+        
+        // Allow local network IP requests (for LAN testing) and localhost
+        if (origin.match(/^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3})(:\d+)?$/)) {
+            return callback(null, true);
+        }
+
         // Allow any Vercel preview deployments
         if (origin.endsWith('.vercel.app') || allowedOrigins.includes(origin)) {
             return callback(null, true);

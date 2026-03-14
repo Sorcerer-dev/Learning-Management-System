@@ -15,6 +15,11 @@ import ResultPublication from './pages/admin/ResultPublication';
 import HRDashboard from './pages/hr/HRDashboard';
 import StaffManagement from './pages/hr/StaffManagement';
 import StudentBulkUpload from './pages/hr/StudentBulkUpload';
+import StudentManagement from './pages/hr/StudentManagement';
+import AdminDetails from './pages/hr/AdminDetails';
+import StudentDetail from './pages/hr/StudentDetail';
+import StaffDetail from './pages/hr/StaffDetail';
+import HRProfileSettings from './pages/hr/HRProfileSettings';
 
 import StaffDashboard from './pages/staff/StaffDashboard';
 import MentorGroup from './pages/staff/MentorGroup';
@@ -103,6 +108,11 @@ function App() {
                         <Route index element={<HRDashboard />} />
                         <Route path="staff" element={<StaffManagement />} />
                         <Route path="students" element={<StudentBulkUpload />} />
+                        <Route path="student-management" element={<StudentManagement />} />
+                        <Route path="student/:id" element={<StudentDetail />} />
+                        <Route path="staff/:id" element={<StaffDetail />} />
+                        <Route path="admin-details" element={<AdminDetails />} />
+                        <Route path="profile" element={<HRProfileSettings />} />
                     </Route>
 
                     {/* Staff Routes */}

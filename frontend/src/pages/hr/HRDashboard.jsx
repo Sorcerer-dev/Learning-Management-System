@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Upload, Users, FileText, CheckCircle, Loader2, Plus, GraduationCap, Shield, X, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/ThemeContext';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { toast } from 'sonner';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -102,30 +102,30 @@ const HRDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Link to="/hr/staff" className="block transition-transform hover:-translate-y-1">
+                <Link to="/hr/student-management" className="block transition-transform hover:-translate-y-1">
                     <StatCard
-                        title="Active Staff"
-                        value={loading ? '...' : (stats?.activeStaff?.toLocaleString() ?? '0')}
-                        icon={<Users className="w-5 h-5 text-primary" />}
-                        loading={loading}
-                    />
-                </Link>
-                <Link to="/hr/students" className="block transition-transform hover:-translate-y-1">
-                    <StatCard
-                        title="Total Students"
+                        title="Active Students"
                         value={loading ? '...' : (stats?.totalStudents?.toLocaleString() ?? '0')}
                         icon={<FileText className="w-5 h-5 text-primary" />}
                         loading={loading}
                     />
                 </Link>
-                <div className="block">
+                <Link to="/hr/staff" className="block transition-transform hover:-translate-y-1">
                     <StatCard
-                        title="Inactive Users"
-                        value={loading ? '...' : (stats?.inactiveUsers?.toLocaleString() ?? '0')}
-                        icon={<CheckCircle className="w-5 h-5 text-primary" />}
+                        title="Total Staff"
+                        value={loading ? '...' : (stats?.activeStaff?.toLocaleString() ?? '0')}
+                        icon={<Users className="w-5 h-5 text-primary" />}
                         loading={loading}
                     />
-                </div>
+                </Link>
+                <Link to="/hr/admin-details" className="block transition-transform hover:-translate-y-1">
+                    <StatCard
+                        title="Admin Summary"
+                        value={loading ? '...' : (stats?.totalAdmins?.toLocaleString() ?? '0')}
+                        icon={<Shield className="w-5 h-5 text-primary" />}
+                        loading={loading}
+                    />
+                </Link>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -161,26 +161,29 @@ const HRDashboard = () => {
                     </div>
                 </div>
 
-                {/* Bulk Student Upload Call-to-Action */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-                    <div className="bg-primary/5 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-gray-800">Bulk Student Onboarding</h2>
-                        <span className="text-xs font-medium bg-primary text-primary-foreground px-2 py-1 rounded">Module</span>
-                    </div>
-                    <div className="p-8 flex-1 flex flex-col items-center justify-center text-center">
-                        <div className="bg-primary/10 p-4 rounded-full mb-4">
-                            <Upload className="w-10 h-10 text-primary" />
-                        </div>
-                        <h3 className="font-bold text-gray-800 text-lg mb-2">Ready to onboard students?</h3>
-                        <p className="text-sm text-gray-500 mb-6">
-                            Use our dedicated module to parse .xlsx files, validate data in real-time, and batch create student accounts.
-                        </p>
-                        <Link
-                            to="/hr/students"
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-lg font-bold transition-all w-full flex items-center justify-center gap-2 shadow-sm"
-                        >
-                            Open Upload Module
-                        </Link>
+                {/* Batch Trends Bar Chart Card */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col">
+                    <h2 className="text-lg font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">Batch Enrollment Trends</h2>
+                    <div className="flex-1 min-h-[300px] flex items-center justify-center w-full mt-2">
+                        {loading ? (
+                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        ) : analytics?.batchTrends?.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={analytics.batchTrends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} dy={10} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} />
+                                    <Tooltip cursor={{ fill: '#F1F5F9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                    <Bar dataKey="students" radius={[4, 4, 0, 0]}>
+                                        {analytics.batchTrends.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill="#0D9488" />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <p className="text-gray-500 text-sm">No trend data available</p>
+                        )}
                     </div>
                 </div>
             </div>

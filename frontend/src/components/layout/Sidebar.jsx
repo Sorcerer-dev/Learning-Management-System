@@ -8,7 +8,8 @@ import {
     BarChart3,
     Settings,
     LogOut,
-    GraduationCap
+    GraduationCap,
+    UserPlus
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
@@ -33,8 +34,9 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             case 'hr':
                 return [
                     { name: 'Dashboard', path: '/hr', icon: <BarChart3 className="w-5 h-5" /> },
+                    { name: 'Student Onboarding', path: '/hr/students', icon: <UserPlus className="w-5 h-5" /> },
+                    { name: 'Student Management', path: '/hr/student-management', icon: <GraduationCap className="w-5 h-5" /> },
                     { name: 'Staff Management', path: '/hr/staff', icon: <Users className="w-5 h-5" /> },
-                    { name: 'Student Onboarding', path: '/hr/students', icon: <GraduationCap className="w-5 h-5" /> },
                 ];
             case 'staff':
                 return [

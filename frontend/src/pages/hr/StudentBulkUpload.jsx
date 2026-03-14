@@ -20,52 +20,17 @@ const StudentBulkUpload = () => {
     const [error, setError] = useState('');
     const fileInputRef = useRef(null);
 
-    // List & Filter State
-    const [students, setStudents] = useState([]);
-    const [studentsLoading, setStudentsLoading] = useState(false);
-    const [filterBatch, setFilterBatch] = useState('');
-    const [filterDept, setFilterDept] = useState('');
-    const [batches, setBatches] = useState([]);
 
-    // Field Selector State
-    const [showEmail, setShowEmail] = useState(true);
-    const [showAdmission, setShowAdmission] = useState(false);
-    const [showParentContact, setShowParentContact] = useState(false);
 
     // Analytics State for Chart
     const [analytics, setAnalytics] = useState(null);
 
     // Manual Add State
     const [manualForm, setManualForm] = useState({
-        name: '', email: '', regNo: '', batchId: '', deptId: 'CSE', admissionType: 'Counseling'
+        name: '', email: '', regNo: '', batchId: '', deptId: 'CSE', admissionType: 'Counseling',
+        parentName: '', parentContact: ''
     });
     const [manualSubmitting, setManualSubmitting] = useState(false);
-
-    const fetchStudents = async () => {
-        try {
-            setStudentsLoading(true);
-            const query = new URLSearchParams();
-            if (filterBatch) query.append('batch', filterBatch);
-            if (filterDept) query.append('dept', filterDept);
-
-            const res = await fetch(`${API_URL}/api/hr/students?${query.toString()}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            if (res.ok) {
-                setStudents(data);
-                // Extract unique batches if not filtering by batch (to populate dropdown)
-                if (!filterBatch) {
-                    const uniqueBatches = [...new Set(data.map(s => s.batch))].filter(Boolean);
-                    setBatches(uniqueBatches.sort());
-                }
-            }
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setStudentsLoading(false);
-        }
-    };
 
     const fetchAnalytics = async () => {
         try {
@@ -81,31 +46,8 @@ const StudentBulkUpload = () => {
     };
 
     useEffect(() => {
-        fetchStudents();
-    }, [filterBatch, filterDept]);
-
-    useEffect(() => {
         fetchAnalytics();
     }, []);
-
-    const handleDeleteStudent = async (id) => {
-        if (!window.confirm("Are you sure you want to deactivate this student?")) return;
-
-        try {
-            const res = await fetch(`${API_URL}/api/hr/students/${id}/status`, {
-                method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                toast.success('Student deactivated successfully');
-                fetchStudents();
-            } else {
-                toast.error('Failed to deactivate student');
-            }
-        } catch (err) {
-            toast.error('Error deactivating student');
-        }
-    };
 
     const handleFileChange = (e) => {
         setError('');
@@ -141,8 +83,8 @@ const StudentBulkUpload = () => {
 
     const downloadTemplate = () => {
         const ws = xlsx.utils.json_to_sheet([
-            { Name: 'John Doe', Email: 'john.doe@univ.com', RegNo: 'REG-2024-002', Batch: 'CSE-2024', Department: 'CSE', AdmissionType: 'Counseling' },
-            { Name: 'Jane Smith', Email: 'jane.smith@univ.com', RegNo: 'REG-2024-003', Batch: 'ECE-2024', Department: 'ECE', AdmissionType: 'Management' }
+            { Name: 'John Doe', Email: 'john.doe@univ.com', RegNo: 'REG-2024-002', Batch: 'CSE-2024', Department: 'CSE', AdmissionType: 'Counseling', ParentName: 'Robert Doe', ParentContact: '9876543210' },
+            { Name: 'Jane Smith', Email: 'jane.smith@univ.com', RegNo: 'REG-2024-003', Batch: 'ECE-2024', Department: 'ECE', AdmissionType: 'Management', ParentName: 'Lisa Smith', ParentContact: '9123456789' }
         ]);
         const wb = xlsx.utils.book_new();
         xlsx.utils.book_append_sheet(wb, ws, "Template");
@@ -175,7 +117,6 @@ const StudentBulkUpload = () => {
             setResult(data);
             setFile(null);
             if (fileInputRef.current) fileInputRef.current.value = '';
-            fetchStudents();
             fetchAnalytics(); // refresh chart
         } catch (err) {
             setError(err.message);
@@ -205,7 +146,7 @@ const StudentBulkUpload = () => {
 
             if (res.ok) {
                 toast.success('Student added successfully!');
-                setManualForm({ name: '', email: '', regNo: '', batchId: '', deptId: 'CSE', admissionType: 'Counseling' });
+                setManualForm({ name: '', email: '', regNo: '', batchId: '', deptId: 'CSE', admissionType: 'Counseling', parentName: '', parentContact: '' });
                 fetchStudents();
                 fetchAnalytics(); // refresh chart
             } else {
@@ -238,12 +179,6 @@ const StudentBulkUpload = () => {
                     className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm transition-all ${activeTab === 'manual' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
                 >
                     <UserPlus className="w-4 h-4" /> Manual Add
-                </button>
-                <button
-                    onClick={() => setActiveTab('explorer')}
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm transition-all ${activeTab === 'explorer' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
-                >
-                    <Users className="w-4 h-4" /> Data Explorer
                 </button>
             </div>
 
@@ -369,6 +304,14 @@ const StudentBulkUpload = () => {
                                     <option value="Management">Management</option>
                                 </select>
                             </div>
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">Parent / Guardian Name <span className="text-slate-400 font-normal">(Optional)</span></label>
+                                <input type="text" name="parentName" value={manualForm.parentName} onChange={handleManualInputChange} className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="e.g. Robert Doe" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">Parent / Guardian Contact <span className="text-slate-400 font-normal">(Optional)</span></label>
+                                <input type="tel" name="parentContact" value={manualForm.parentContact} onChange={handleManualInputChange} className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="e.g. 9876543210" />
+                            </div>
                         </div>
                         <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                             <p className="text-sm text-slate-500">Default password will be set to: <strong className="text-slate-700">Welcome@123</strong></p>
@@ -377,150 +320,6 @@ const StudentBulkUpload = () => {
                             </button>
                         </div>
                     </form>
-                </div>
-            )}
-
-            {activeTab === 'explorer' && (
-                <div className="animate-in fade-in duration-300">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                        {/* Filters Card */}
-                        <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-border p-6 flex flex-col gap-6">
-                            <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
-                                <Filter className="w-5 h-5 text-primary" />
-                                <h3 className="font-bold text-gray-800">Hierarchical Filters</h3>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">Select Department</label>
-                                <select
-                                    value={filterDept}
-                                    onChange={(e) => setFilterDept(e.target.value)}
-                                    className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-slate-50"
-                                >
-                                    <option value="">All Departments</option>
-                                    <option value="CSE">CSE</option>
-                                    <option value="ECE">ECE</option>
-                                    <option value="EEE">EEE</option>
-                                    <option value="MECH">MECH</option>
-                                    <option value="IT">IT</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">Select Batch</label>
-                                <select
-                                    value={filterBatch}
-                                    onChange={(e) => setFilterBatch(e.target.value)}
-                                    className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-slate-50"
-                                >
-                                    <option value="">All Batches</option>
-                                    {batches.map(b => <option key={b} value={b}>{b}</option>)}
-                                </select>
-                            </div>
-
-                            <div className="border-t border-gray-100 pt-4">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <LayoutPanelLeft className="w-4 h-4 text-primary" />
-                                    <h4 className="font-bold text-sm text-gray-800">Field Selector (Columns)</h4>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                                        <input type="checkbox" checked={showEmail} onChange={() => setShowEmail(!showEmail)} className="rounded text-primary focus:ring-primary" />
-                                        Email Address
-                                    </label>
-                                    <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                                        <input type="checkbox" checked={showAdmission} onChange={() => setShowAdmission(!showAdmission)} className="rounded text-primary focus:ring-primary" />
-                                        Admission Type
-                                    </label>
-                                    <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                                        <input type="checkbox" checked={showParentContact} onChange={() => setShowParentContact(!showParentContact)} className="rounded text-primary focus:ring-primary" />
-                                        Parent Contact
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Chart Card */}
-                        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-border p-6 flex flex-col">
-                            <h3 className="font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">Batch Enrollment Trends</h3>
-                            <div className="flex-1 min-h-[250px] w-full mt-2">
-                                {analytics?.batchTrends?.length > 0 ? (
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={analytics.batchTrends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} dy={10} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} />
-                                            <RechartsTooltip cursor={{ fill: '#F1F5F9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                            <Bar dataKey="students" radius={[4, 4, 0, 0]}>
-                                                {analytics.batchTrends.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill="#0D9488" />
-                                                ))}
-                                            </Bar>
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                ) : (
-                                    <div className="flex items-center justify-center h-full text-sm text-slate-400">
-                                        No trend data available
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
-                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50">
-                            <h2 className="text-xl font-bold text-slate-800">Student Directory ({students.length})</h2>
-                            <button onClick={fetchStudents} className="text-sm font-medium text-primary hover:underline">
-                                Refresh List
-                            </button>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-slate-50">
-                                    <tr>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Reg No</th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Batch</th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Dept</th>
-                                        {showEmail && <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>}
-                                        {showAdmission && <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Admission</th>}
-                                        {showParentContact && <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Parent Contact</th>}
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                                        <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100 bg-white">
-                                    {studentsLoading ? (
-                                        <tr><td colSpan="9" className="px-6 py-8 text-center text-slate-500"><Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />Loading...</td></tr>
-                                    ) : students.length === 0 ? (
-                                        <tr><td colSpan="9" className="px-6 py-8 text-center text-slate-500">No students match your filters.</td></tr>
-                                    ) : (
-                                        students.map((student) => (
-                                            <tr key={student.id} className="hover:bg-slate-50 transition-colors">
-                                                <td className="px-6 py-4 text-sm font-medium text-slate-700">{student.id}</td>
-                                                <td className="px-6 py-4 text-sm font-bold text-slate-800">{student.name}</td>
-                                                <td className="px-6 py-4 text-sm text-slate-600">{student.batch}</td>
-                                                <td className="px-6 py-4 text-sm text-slate-600">{student.department}</td>
-                                                {showEmail && <td className="px-6 py-4 text-sm text-slate-600">{student.email}</td>}
-                                                {showAdmission && <td className="px-6 py-4 text-sm text-slate-600">{student.admissionType || '-'}</td>}
-                                                {showParentContact && <td className="px-6 py-4 text-sm text-slate-600">-</td>}
-                                                <td className="px-6 py-4">
-                                                    <span className={`px-3 py-1 text-xs font-bold rounded-full ${student.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                                                        {student.status}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 text-right">
-                                                    <button onClick={() => handleDeleteStudent(student.id)} disabled={student.status === 'Inactive'} className={`p-2 rounded-lg transition-colors flex items-center justify-end ml-auto gap-1 ${student.status === 'Inactive' ? 'text-slate-400 cursor-not-allowed hidden' : 'text-red-600 hover:bg-red-50'}`}>
-                                                        <Trash2 className="w-4 h-4" /> <span className="text-xs font-medium">Delete</span>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
                 </div>
             )}
         </div>

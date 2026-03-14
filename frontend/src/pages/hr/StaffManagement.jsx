@@ -1,30 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { Pencil, UserX, Loader2, Inbox, Plus, X, Filter } from 'lucide-react';
+import { Pencil, UserX, Loader2, Inbox, Plus, X, Filter, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../context/ThemeContext';
 import { toast } from 'sonner';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+const DEPARTMENTS = ['CSE', 'ECE', 'EEE', 'MECH', 'IT'];
+const DESIGNATIONS = ['HOD', 'Advisor', 'Mentor', 'HR'];
+const DESIGNATION_LABELS = { HOD: 'Head of Department', Advisor: 'Advisor', Mentor: 'Mentor', HR: 'HR Officer' };
+
 const StaffManagement = () => {
-    const { token, role } = useAuth();
+    const { token } = useAuth();
     const [staffMembers, setStaffMembers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+    // Edit modal state
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingStaff, setEditingStaff] = useState(null);
+    const [editForm, setEditForm] = useState({ name: '', email: '', deptId: 'CSE', designation: 'Advisor', salary: '', phone: '' });
+    const [editSubmitting, setEditSubmitting] = useState(false);
 
     // Filter state
     const [filterDept, setFilterDept] = useState('');
     const [filterDesignation, setFilterDesignation] = useState('');
     const [analytics, setAnalytics] = useState(null);
 
-    // Form state
+    // Add form state
     const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        staffId: '',
-        deptId: 'CSE',
-        designation: 'Advisor',
-        salary: ''
+        name: '', email: '', staffId: '', deptId: 'CSE', designation: 'Advisor', salary: ''
     });
     const [submitting, setSubmitting] = useState(false);
 
@@ -95,11 +100,9 @@ const StaffManagement = () => {
             if (res.ok) {
                 toast.success('Staff member added successfully');
                 setIsAddModalOpen(false);
-                setFormData({
-                    name: '', email: '', staffId: '', deptId: 'CSE', designation: 'Advisor', salary: ''
-                });
+                setFormData({ name: '', email: '', staffId: '', deptId: 'CSE', designation: 'Advisor', salary: '' });
                 fetchStaff();
-                fetchAnalytics(); // refresh chart
+                fetchAnalytics();
             } else {
                 toast.error(data.error || 'Failed to add staff');
             }
@@ -110,9 +113,75 @@ const StaffManagement = () => {
         }
     };
 
+    // Open Edit modal pre-filled with staff data
+    const openEditModal = (staff) => {
+        setEditingStaff(staff);
+        setEditForm({
+            name: staff.name || '',
+            email: staff.email || '',
+            deptId: staff.department || 'CSE',
+            designation: staff.designation || 'Advisor',
+            salary: staff.salary ?? '',
+            phone: staff.phone || ''
+        });
+        setIsEditModalOpen(true);
+    };
+
+    const handleEditStaff = async (e) => {
+        e.preventDefault();
+        if (!editingStaff) return;
+        setEditSubmitting(true);
+        try {
+            const res = await fetch(`${API_URL}/api/hr/staff/${editingStaff.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(editForm)
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                toast.success('Staff member updated successfully');
+                setIsEditModalOpen(false);
+                setEditingStaff(null);
+                fetchStaff();
+                fetchAnalytics();
+            } else {
+                toast.error(data.error || 'Failed to update staff');
+            }
+        } catch (err) {
+            console.error('Edit Staff Error:', err);
+            toast.error('Network error. Failed to update staff.');
+        } finally {
+            setEditSubmitting(false);
+        }
+    };
+
+    const handleToggleStatus = async (staff) => {
+        const actionStr = staff.status === 'Active' ? 'deactivate' : 'activate';
+        if (!window.confirm(`Are you sure you want to ${actionStr} ${staff.name}?`)) return;
+
+        try {
+            const res = await fetch(`${API_URL}/api/hr/staff/${staff.id}/status`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                toast.success(`${staff.name} has been ${actionStr}d`);
+                fetchStaff();
+            } else {
+                const data = await res.json();
+                toast.error(data.error || `Failed to ${actionStr} staff`);
+            }
+        } catch (err) {
+            toast.error(`Network error. Failed to ${actionStr} staff.`);
+        }
+    };
+
     const hasSalaryColumn = staffMembers.some(s => s.salary !== undefined);
 
-    const designations = ['HOD', 'Advisor', 'Mentor', 'HR'];
     const colors = ['#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6'];
 
     return (
@@ -147,11 +216,7 @@ const StaffManagement = () => {
                             className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-slate-50"
                         >
                             <option value="">All Departments</option>
-                            <option value="CSE">CSE</option>
-                            <option value="ECE">ECE</option>
-                            <option value="EEE">EEE</option>
-                            <option value="MECH">MECH</option>
-                            <option value="IT">IT</option>
+                            {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
                         </select>
                     </div>
 
@@ -163,10 +228,7 @@ const StaffManagement = () => {
                             className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-slate-50"
                         >
                             <option value="">All Designations</option>
-                            <option value="HOD">HOD</option>
-                            <option value="Advisor">Advisor</option>
-                            <option value="Mentor">Mentor</option>
-                            <option value="HR">HR</option>
+                            {DESIGNATIONS.map(d => <option key={d} value={d}>{d}</option>)}
                         </select>
                     </div>
                 </div>
@@ -186,8 +248,8 @@ const StaffManagement = () => {
                                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                     />
                                     <Legend iconType="circle" wrapperStyle={{ fontSize: 12, marginTop: 10 }} />
-                                    {designations.map((desig, idx) => (
-                                        <Bar key={desig} dataKey={desig} stackId="a" fill={colors[idx]} radius={idx === designations.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} />
+                                    {DESIGNATIONS.map((desig, idx) => (
+                                        <Bar key={desig} dataKey={desig} stackId="a" fill={colors[idx]} radius={idx === DESIGNATIONS.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} />
                                     ))}
                                 </BarChart>
                             </ResponsiveContainer>
@@ -232,7 +294,10 @@ const StaffManagement = () => {
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {staffMembers.map((staff) => (
-                                <tr key={staff.id} className="hover:bg-slate-50 transition-colors">
+                                <tr key={staff.id} onClick={(e) => {
+                                    if(e.target.closest('button')) return;
+                                    navigate(`/hr/staff/${staff.id}`);
+                                }} className="hover:bg-slate-50 transition-colors cursor-pointer group">
                                     <td className="px-6 py-4 text-sm font-medium text-slate-700 whitespace-nowrap">{staff.id}</td>
                                     <td className="px-6 py-4 text-sm font-bold text-slate-800 whitespace-nowrap">{staff.name}</td>
                                     <td className="px-6 py-4 text-sm text-slate-600 whitespace-nowrap">{staff.department}</td>
@@ -242,18 +307,23 @@ const StaffManagement = () => {
                                             {staff.salary ? `$${staff.salary.toLocaleString()}` : '-'}
                                         </td>
                                     )}
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-3 py-1 text-xs font-bold rounded-full ${staff.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                                            {staff.status}
-                                        </span>
+                                    <td className="px-6 py-4 text-center whitespace-nowrap">
+                                        <button
+                                            onClick={() => handleToggleStatus(staff)}
+                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${staff.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                                            title={`Toggle status (currently ${staff.status})`}
+                                        >
+                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${staff.status === 'Active' ? 'translate-x-6' : 'translate-x-1'}`} />
+                                        </button>
                                     </td>
                                     <td className="px-6 py-4 text-right whitespace-nowrap">
                                         <div className="flex justify-end gap-2">
-                                            <button className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Edit">
+                                            <button
+                                                onClick={() => openEditModal(staff)}
+                                                className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                                title="Edit staff"
+                                            >
                                                 <Pencil className="w-4 h-4" />
-                                            </button>
-                                            <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Deactivate">
-                                                <UserX className="w-4 h-4" />
                                             </button>
                                         </div>
                                     </td>
@@ -281,7 +351,7 @@ const StaffManagement = () => {
                                     <input type="text" name="name" value={formData.name} onChange={handleInputChange} required className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="Jane Doe" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Data</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                                     <input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="jane.doe@univ.edu" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
@@ -292,11 +362,7 @@ const StaffManagement = () => {
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
                                         <select name="deptId" value={formData.deptId} onChange={handleInputChange} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                                            <option value="CSE">CSE</option>
-                                            <option value="ECE">ECE</option>
-                                            <option value="EEE">EEE</option>
-                                            <option value="MECH">MECH</option>
-                                            <option value="IT">IT</option>
+                                            {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
                                         </select>
                                     </div>
                                 </div>
@@ -304,10 +370,7 @@ const StaffManagement = () => {
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Designation / Role</label>
                                         <select name="designation" value={formData.designation} onChange={handleInputChange} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                                            <option value="HOD">Head of Department</option>
-                                            <option value="Advisor">Advisor</option>
-                                            <option value="Mentor">Mentor</option>
-                                            <option value="HR">HR Officer</option>
+                                            {DESIGNATIONS.map(d => <option key={d} value={d}>{DESIGNATION_LABELS[d]}</option>)}
                                         </select>
                                     </div>
                                     <div>
@@ -324,6 +387,99 @@ const StaffManagement = () => {
                             </button>
                             <button type="submit" form="add-staff-form" disabled={submitting} className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2">
                                 {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Create Staff'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Staff Modal */}
+            {isEditModalOpen && editingStaff && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-xl border border-gray-100 w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50 shrink-0">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-800">Edit Staff Member</h2>
+                                <p className="text-sm text-slate-500">ID: {editingStaff.id}</p>
+                            </div>
+                            <button onClick={() => setIsEditModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto">
+                            <form id="edit-staff-form" onSubmit={handleEditStaff} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                    <input
+                                        type="text"
+                                        value={editForm.name}
+                                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                        required
+                                        className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                    <input
+                                        type="email"
+                                        value={editForm.email}
+                                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                                        required
+                                        className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                                        <select
+                                            value={editForm.deptId}
+                                            onChange={(e) => setEditForm({ ...editForm, deptId: e.target.value })}
+                                            className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                        >
+                                            {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Designation</label>
+                                        <select
+                                            value={editForm.designation}
+                                            onChange={(e) => setEditForm({ ...editForm, designation: e.target.value })}
+                                            className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                        >
+                                            {DESIGNATIONS.map(d => <option key={d} value={d}>{DESIGNATION_LABELS[d]}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Salary (Optional)</label>
+                                        <input
+                                            type="number"
+                                            value={editForm.salary}
+                                            onChange={(e) => setEditForm({ ...editForm, salary: e.target.value })}
+                                            className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                            placeholder="e.g. 50000"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone (Optional)</label>
+                                        <input
+                                            type="tel"
+                                            value={editForm.phone}
+                                            onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                                            className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                            placeholder="+91 9876543210"
+                                        />
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 shrink-0">
+                            <button type="button" onClick={() => setIsEditModalOpen(false)} className="px-5 py-2.5 text-gray-600 hover:bg-gray-200 font-medium rounded-lg transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" form="edit-staff-form" disabled={editSubmitting} className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2">
+                                {editSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><CheckCircle className="w-4 h-4" /> Save Changes</>}
                             </button>
                         </div>
                     </div>

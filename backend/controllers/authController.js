@@ -146,8 +146,76 @@ const changePassword = async (req, res) => {
     }
 };
 
+const updateProfile = async (req, res) => {
+    try {
+        const { name, phone, currentPassword, newPassword } = req.body;
+        const userId = req.user.id;
+        const userType = req.user.userType;
+
+        // Fetch user basic data
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: { staffProfile: true, studentProfile: true }
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Handle password change if requested
+        if (currentPassword && newPassword) {
+            if (newPassword.length < 6) {
+                return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
+            }
+
+            const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+            if (!isValidPassword) {
+                return res.status(401).json({ error: 'Invalid current password.' });
+            }
+
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            await prisma.user.update({
+                where: { id: userId },
+                data: { password: hashedPassword }
+            });
+        } else if (newPassword && !currentPassword) {
+            return res.status(400).json({ error: 'Current password is required to set a new password.' });
+        }
+
+        // Handle profile updates based on userType
+        if (userType === 'Staff' || userType === 'Admin') {
+            if (user.staffProfile) {
+                await prisma.staffProfile.update({
+                    where: { userId },
+                    data: {
+                        ...(name ? { name } : {}),
+                        ...(phone ? { phone } : {})
+                    }
+                });
+            }
+        } else if (userType === 'Student') {
+            if (user.studentProfile) {
+                await prisma.studentProfile.update({
+                    where: { userId },
+                    data: {
+                        ...(name ? { name } : {}),
+                        ...(phone ? { phone } : {})
+                    }
+                });
+            }
+        }
+
+        res.json({ message: 'Profile updated successfully' });
+
+    } catch (error) {
+        console.error('Update profile error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
 module.exports = {
     login,
     getMe,
-    changePassword
+    changePassword,
+    updateProfile
 };

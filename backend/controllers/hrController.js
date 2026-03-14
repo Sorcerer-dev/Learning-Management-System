@@ -113,6 +113,11 @@ const getAllStudents = async (req, res) => {
 
         const students = await prisma.studentProfile.findMany({
             where: Object.keys(whereClause).length > 0 ? whereClause : undefined,
+            orderBy: {
+                user: {
+                    createdAt: 'desc'
+                }
+            },
             include: {
                 user: {
                     select: {
@@ -131,13 +136,46 @@ const getAllStudents = async (req, res) => {
             department: s.user?.deptId,
             batch: s.batchId,
             status: s.user?.status,
-            admissionType: s.admissionType
+            admissionType: s.admissionType,
+            parentName: s.parentName || null,
+            parentContact: s.parentContact || null
         }));
 
         return res.status(200).json(formattedStudents);
     } catch (error) {
         console.error('Error fetching students:', error);
         return res.status(500).json({ error: 'Failed to fetch students' });
+    }
+};
+
+const getStudentById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const student = await prisma.studentProfile.findUnique({
+            where: { regNo: id },
+            include: {
+                user: {
+                    select: {
+                        email: true,
+                        status: true,
+                        createdAt: true
+                    }
+                },
+                marks: true,
+                arrears: true,
+                mentor: true,
+                advisor: true
+            }
+        });
+
+        if (!student) {
+            return res.status(404).json({ error: 'Student not found' });
+        }
+
+        return res.status(200).json(student);
+    } catch (error) {
+        console.error('Error fetching student by ID:', error);
+        return res.status(500).json({ error: 'Failed to fetch student details' });
     }
 };
 
@@ -154,31 +192,75 @@ const deleteStudent = async (req, res) => {
             return res.status(404).json({ error: 'Student not found' });
         }
 
+        const newStatus = student.user.status === 'Active' ? 'Inactive' : 'Active';
         await prisma.user.update({
             where: { id: student.userId },
-            data: { status: 'Inactive' }
+            data: { status: newStatus }
         });
 
-        return res.status(200).json({ message: 'Student successfully deactivated' });
+        return res.status(200).json({ message: `Student successfully ${newStatus === 'Active' ? 'activated' : 'deactivated'}` });
 
     } catch (error) {
-        console.error('Error deactivating student:', error);
-        return res.status(500).json({ error: 'Failed to deactivate student' });
+        console.error('Error toggling student status:', error);
+        return res.status(500).json({ error: 'Failed to toggle student status' });
+    }
+};
+
+const editStudent = async (req, res) => {
+    try {
+        const { id } = req.params; // regNo
+        const { name, email, department, batch, admissionType, parentContact } = req.body;
+
+        const student = await prisma.studentProfile.findUnique({
+            where: { regNo: id },
+            include: { user: true }
+        });
+
+        if (!student) {
+            return res.status(404).json({ error: 'Student not found' });
+        }
+
+        await prisma.$transaction(async (tx) => {
+            await tx.user.update({
+                where: { id: student.userId },
+                data: {
+                    ...(email && email !== student.user.email ? { email } : {}),
+                    ...(department ? { deptId: department } : {}),
+                }
+            });
+
+            await tx.studentProfile.update({
+                where: { regNo: id },
+                data: {
+                    ...(name ? { name } : {}),
+                    ...(batch ? { batchId: batch } : {}),
+                    ...(admissionType ? { admissionType } : {}),
+                    ...(parentContact !== undefined ? { parentContact: parentContact || null } : {}),
+                }
+            });
+        });
+
+        return res.status(200).json({ message: 'Student updated successfully' });
+    } catch (error) {
+        console.error('Error editing student:', error);
+        return res.status(500).json({ error: 'Failed to update student' });
     }
 };
 
 const getHRStats = async (req, res) => {
     try {
-        const [totalStudents, activeStaff, inactiveUsers] = await Promise.all([
+        const [totalStudents, activeStaff, inactiveUsers, totalAdmins] = await Promise.all([
             prisma.user.count({ where: { userType: 'Student' } }),
             prisma.user.count({ where: { userType: 'Staff', status: 'Active' } }),
             prisma.user.count({ where: { status: 'Inactive' } }),
+            prisma.user.count({ where: { tagAccess: 'Admin', status: 'Active' } }),
         ]);
 
         return res.status(200).json({
             totalStudents,
             activeStaff,
-            inactiveUsers
+            inactiveUsers,
+            totalAdmins
         });
     } catch (error) {
         console.error('Error fetching HR stats:', error);
@@ -189,45 +271,104 @@ const getHRStats = async (req, res) => {
 const getAllStaff = async (req, res) => {
     try {
         const { dept, designation } = req.query;
-        let whereClause = {};
-
-        if (dept) whereClause.deptId = dept;
-        if (designation) {
-            whereClause.user = { is: { tagAccess: designation } };
-        }
-
-        const staff = await prisma.staffProfile.findMany({
-            where: Object.keys(whereClause).length > 0 ? whereClause : undefined,
-            include: {
-                user: {
-                    select: {
-                        email: true,
-                        status: true,
-                        tagAccess: true
-                    }
+        let whereClause = {
+            user: {
+                tagAccess: {
+                    notIn: ['Admin', 'HR', 'Dean', 'Principal']
                 }
             }
+        };
+
+        if (dept) whereClause.deptId = dept;
+        if (designation) whereClause.user = { ...whereClause.user, tagAccess: designation };
+
+        const staffMembers = await prisma.staffProfile.findMany({
+            where: whereClause,
+            include: {
+                user: {
+                    select: { email: true, status: true, tagAccess: true }
+                }
+            },
+            orderBy: { name: 'asc' }
         });
 
-        // Determine if requester is HR or Dean
-        const canViewSalary = ['HR', 'Dean', 'Admin'].includes(req.user.tagAccess);
-
-        const formattedStaff = staff.map(s => ({
-            id: s.staffId,
-            name: s.name,
-            email: s.user?.email,
-            department: s.deptId,
-            designation: s.user?.tagAccess,
-            status: s.user?.status,
-            salary: canViewSalary ? s.salary : undefined,
-            doj: s.doj,
-            phone: s.phone
+        // Map to flat structure for the frontend table
+        const formattedStaff = staffMembers.map(staff => ({
+            id: staff.staffId,
+            name: staff.name,
+            email: staff.user?.email,
+            department: staff.deptId,
+            designation: staff.user?.tagAccess,
+            salary: staff.salary,
+            status: staff.user?.status,
+            phone: staff.phone
         }));
 
         return res.status(200).json(formattedStaff);
     } catch (error) {
         console.error('Error fetching staff:', error);
-        return res.status(500).json({ error: 'Failed to fetch staff' });
+        return res.status(500).json({ error: 'Failed to fetch staff list' });
+    }
+};
+
+const getAllAdmins = async (req, res) => {
+    try {
+        const admins = await prisma.user.findMany({
+            where: {
+                tagAccess: {
+                    in: ['Admin', 'HR', 'Dean', 'Principal']
+                }
+            },
+            include: {
+                staffProfile: true
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        const formattedAdmins = admins.map(admin => ({
+            id: admin.id,
+            email: admin.email,
+            role: admin.tagAccess,
+            status: admin.status,
+            name: admin.staffProfile?.name || 'Admin User',
+            department: admin.staffProfile?.deptId || 'Admin Office',
+            phone: admin.staffProfile?.phone || '-'
+        }));
+
+        return res.status(200).json(formattedAdmins);
+    } catch (error) {
+        console.error('Error fetching admins:', error);
+        return res.status(500).json({ error: 'Failed to fetch admins list' });
+    }
+};
+
+const getStaffById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const staff = await prisma.staffProfile.findUnique({
+            where: { staffId: id },
+            include: {
+                user: {
+                    select: {
+                        email: true,
+                        status: true,
+                        createdAt: true,
+                        tagAccess: true
+                    }
+                },
+                mentees: true,
+                advisedBatch: true
+            }
+        });
+
+        if (!staff) {
+            return res.status(404).json({ error: 'Staff member not found' });
+        }
+
+        return res.status(200).json(staff);
+    } catch (error) {
+        console.error('Error fetching staff by ID:', error);
+        return res.status(500).json({ error: 'Failed to fetch staff details' });
     }
 };
 
@@ -280,7 +421,7 @@ const addStaff = async (req, res) => {
 
 const addStudentManual = async (req, res) => {
     try {
-        const { name, email, regNo, batchId, deptId, admissionType } = req.body;
+        const { name, email, regNo, batchId, deptId, admissionType, parentName, parentContact } = req.body;
 
         if (!name || !email || !regNo || !batchId || !deptId) {
             return res.status(400).json({ error: 'Missing required fields' });
@@ -309,6 +450,8 @@ const addStudentManual = async (req, res) => {
                         name,
                         batchId,
                         admissionType: admissionType || 'Counseling',
+                        parentName: parentName || null,
+                        parentContact: parentContact || null,
                         profileLocked: false
                     }
                 }
@@ -319,6 +462,82 @@ const addStudentManual = async (req, res) => {
     } catch (error) {
         console.error('Error adding student:', error);
         return res.status(500).json({ error: 'Failed to add student' });
+    }
+};
+
+// PUT /api/hr/staff/:id — Edit staff profile and designation
+const editStaff = async (req, res) => {
+    try {
+        const { id } = req.params; // staffId
+        const { name, email, deptId, designation, salary, phone } = req.body;
+
+        const staff = await prisma.staffProfile.findUnique({
+            where: { staffId: id },
+            include: { user: true }
+        });
+
+        if (!staff) {
+            return res.status(404).json({ error: 'Staff member not found' });
+        }
+
+        // Update in a transaction: both the User and StaffProfile tables
+        await prisma.$transaction(async (tx) => {
+            // Update User fields (email, tagAccess/designation, deptId)
+            await tx.user.update({
+                where: { id: staff.userId },
+                data: {
+                    ...(email && email !== staff.user.email ? { email } : {}),
+                    ...(designation ? { tagAccess: designation } : {}),
+                    ...(deptId ? { deptId } : {}),
+                }
+            });
+
+            // Update StaffProfile fields
+            await tx.staffProfile.update({
+                where: { staffId: id },
+                data: {
+                    ...(name ? { name } : {}),
+                    ...(deptId ? { deptId } : {}),
+                    ...(salary !== undefined ? { salary: salary ? parseFloat(salary) : null } : {}),
+                    ...(phone !== undefined ? { phone: phone || null } : {}),
+                }
+            });
+        });
+
+        return res.status(200).json({ message: 'Staff updated successfully' });
+    } catch (error) {
+        console.error('Error editing staff:', error);
+        if (error.code === 'P2002') {
+            return res.status(400).json({ error: 'Email already in use by another user' });
+        }
+        return res.status(500).json({ error: 'Failed to update staff' });
+    }
+};
+
+// PUT /api/hr/staff/:id/status — Deactivate a staff member
+const deactivateStaff = async (req, res) => {
+    try {
+        const { id } = req.params; // staffId
+
+        const staff = await prisma.staffProfile.findUnique({
+            where: { staffId: id },
+            include: { user: true }
+        });
+
+        if (!staff) {
+            return res.status(404).json({ error: 'Staff member not found' });
+        }
+
+        const newStatus = staff.user.status === 'Active' ? 'Inactive' : 'Active';
+        await prisma.user.update({
+            where: { id: staff.userId },
+            data: { status: newStatus }
+        });
+
+        return res.status(200).json({ message: `Staff member ${newStatus === 'Active' ? 'activated' : 'deactivated'} successfully` });
+    } catch (error) {
+        console.error('Error toggling staff status:', error);
+        return res.status(500).json({ error: 'Failed to toggle staff status' });
     }
 };
 
@@ -412,7 +631,13 @@ module.exports = {
     getHRStats,
     getAllStaff,
     addStaff,
+    editStaff,
+    deactivateStaff,
     addStudentManual,
     addAdmin,
-    getAnalytics
+    getAnalytics,
+    editStudent,
+    getStudentById,
+    getStaffById,
+    getAllAdmins
 };

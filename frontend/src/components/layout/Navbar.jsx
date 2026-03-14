@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/ThemeContext';
-import { Menu, Bell, Search, UserCircle } from 'lucide-react';
+import { Menu, Bell, Search, UserCircle, ChevronDown, Settings, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Navbar = ({ toggleSidebar }) => {
     const { role, user } = useAuth();
@@ -14,6 +15,22 @@ const Navbar = ({ toggleSidebar }) => {
             default: return 'User';
         }
     };
+
+    const navigate = useNavigate();
+    const { logout } = useAuth();
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    // Close dropdown strictly when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsProfileOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     return (
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 shrink-0 shadow-sm z-10 w-full relative">
@@ -47,15 +64,45 @@ const Navbar = ({ toggleSidebar }) => {
                 </button>
 
                 {/* User Profile */}
-                <div className="flex items-center pl-4 border-l border-gray-200">
-                    <div className="hidden md:block mr-3 text-right">
-                        <p className="text-sm font-semibold text-gray-700 leading-tight">{user?.name || 'User'}</p>
-                        <div className="flex items-center justify-end mt-0.5">
-                            <span className="w-2 h-2 rounded-full bg-primary mr-1.5 shadow-sm"></span>
-                            <p className="text-xs text-gray-500 capitalize font-medium">{getRoleDisplayName()}</p>
+                <div className="relative" ref={dropdownRef}>
+                    <button
+                        onClick={() => setIsProfileOpen(!isProfileOpen)}
+                        className="flex items-center pl-4 border-l border-gray-200 hover:bg-gray-50 p-2 rounded-lg transition-colors focus:outline-none"
+                    >
+                        <div className="hidden md:block mr-3 text-right">
+                            <p className="text-sm font-semibold text-gray-700 leading-tight">{user?.name || 'User'}</p>
+                            <div className="flex items-center justify-end mt-0.5">
+                                <span className="w-2 h-2 rounded-full bg-primary mr-1.5 shadow-sm"></span>
+                                <p className="text-xs text-gray-500 capitalize font-medium">{getRoleDisplayName()}</p>
+                            </div>
                         </div>
-                    </div>
-                    <UserCircle className="w-8 h-8 text-primary opacity-80" />
+                        <UserCircle className="w-8 h-8 text-primary opacity-80" />
+                        <ChevronDown className="w-4 h-4 text-gray-400 ml-2 hidden md:block" />
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    {isProfileOpen && (
+                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="px-4 py-3 border-b border-gray-50 md:hidden text-center">
+                                <p className="text-sm font-bold text-gray-800">{user?.name || 'User'}</p>
+                                <p className="text-xs text-gray-500">{user?.email}</p>
+                            </div>
+                            <div className="p-2">
+                                <button
+                                    onClick={() => { setIsProfileOpen(false); navigate(`/${role}/profile`); }}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 font-medium hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                                >
+                                    <Settings className="w-4 h-4" /> Profile Settings
+                                </button>
+                                <button
+                                    onClick={() => { setIsProfileOpen(false); logout(); }}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors mt-1"
+                                >
+                                    <LogOut className="w-4 h-4" /> Log Out
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </header>

@@ -1,6 +1,9 @@
 const jwt = require('jsonwebtoken');
+const { PrismaClient } = require('@prisma/client');
 
-const verifyToken = (req, res, next) => {
+const prisma = new PrismaClient();
+
+const verifyToken = async (req, res, next) => {
     const token = req.headers['authorization']?.split(' ')[1];
 
     if (!token) {
@@ -9,6 +12,17 @@ const verifyToken = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'ums-super-secret-key-change-in-production');
+
+        // Live status check — if user was deactivated since token was issued, reject immediately
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.id },
+            select: { id: true, status: true }
+        });
+
+        if (!user || user.status !== 'Active') {
+            return res.status(403).json({ message: "Account is deactivated. Contact HR." });
+        }
+
         req.user = decoded; // Contains id, email, and tagAccess
         next();
     } catch (err) {

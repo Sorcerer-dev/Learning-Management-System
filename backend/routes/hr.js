@@ -8,9 +8,15 @@ const {
     getHRStats,
     getAllStaff,
     addStaff,
+    editStaff,
+    deactivateStaff,
     addStudentManual,
     addAdmin,
-    getAnalytics
+    getAnalytics,
+    editStudent,
+    getStudentById,
+    getStaffById,
+    getAllAdmins
 } = require('../controllers/hrController');
 
 const router = express.Router();
@@ -29,6 +35,14 @@ router.post(
     verifyToken,
     authorizeTag(['HR', 'Admin']),
     addAdmin
+);
+
+// GET /api/hr/admins
+router.get(
+    '/admins',
+    verifyToken,
+    authorizeTag(['HR', 'Admin', 'Dean']),
+    getAllAdmins
 );
 
 // Configure multer to store files in memory (perfect for quick parsing without disk writing)
@@ -58,13 +72,28 @@ router.get(
     getAllStudents
 );
 
-// PUT /api/hr/students/:id/status
-// Soft delete a student
-router.put(
+// GET /api/hr/students/:id
+router.get(
+    '/students/:id',
+    verifyToken,
+    authorizeTag(['HR', 'Dean', 'Admin']),
+    getStudentById
+);
+
+// PATCH /api/hr/students/:id/status — Soft-deactivate a student
+router.patch(
     '/students/:id/status',
     verifyToken,
     authorizeTag(['HR']),
     deleteStudent
+);
+
+// PUT /api/hr/students/:id — Edit student details
+router.put(
+    '/students/:id',
+    verifyToken,
+    authorizeTag(['HR', 'Admin']),
+    editStudent
 );
 
 // GET /api/hr/stats
@@ -83,12 +112,36 @@ router.get(
     getAllStaff
 );
 
-// POST /api/hr/staff
+// GET /api/hr/staff/:id
+router.get(
+    '/staff/:id',
+    verifyToken,
+    authorizeTag(['HR', 'Admin', 'Dean']),
+    getStaffById
+);
+
+// POST /api/hr/staff — Create new staff member
 router.post(
     '/staff',
     verifyToken,
     authorizeTag(['HR', 'Admin']),
     addStaff
+);
+
+// PUT /api/hr/staff/:id — Edit staff details (name, email, dept, designation, salary, phone)
+router.put(
+    '/staff/:id',
+    verifyToken,
+    authorizeTag(['HR', 'Admin']),
+    editStaff
+);
+
+// PUT /api/hr/staff/:id/status — Deactivate a staff member
+router.put(
+    '/staff/:id/status',
+    verifyToken,
+    authorizeTag(['HR', 'Admin']),
+    deactivateStaff
 );
 
 // POST /api/hr/students/manual

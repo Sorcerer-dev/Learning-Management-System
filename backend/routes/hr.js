@@ -16,7 +16,9 @@ const {
     editStudent,
     getStudentById,
     getStaffById,
-    getAllAdmins
+    getAllAdmins,
+    getBatches,
+    addBatch
 } = require('../controllers/hrController');
 
 const router = express.Router();
@@ -150,6 +152,21 @@ router.post(
     verifyToken,
     authorizeTag(['HR', 'Admin']),
     addStudentManual
+);
+
+// Batch Routes
+router.get(
+    '/batches',
+    verifyToken,
+    authorizeTag(['HR', 'Admin', 'Dean', 'Staff', 'Student']),
+    getBatches
+);
+
+router.post(
+    '/batches',
+    verifyToken,
+    authorizeTag(['HR', 'Admin']),
+    addBatch
 );
 
 module.exports = router;

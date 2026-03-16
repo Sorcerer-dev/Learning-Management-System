@@ -1,8 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/ThemeContext';
-import { Users, Filter, LayoutPanelLeft, Loader2, Trash2, Pencil, CheckCircle, X } from 'lucide-react';
-import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { 
+    Users, 
+    Search, 
+    Filter, 
+    MoreVertical, 
+    Edit, 
+    Trash2, 
+    Table,
+    Download,
+    Upload,
+    Plus,
+    X,
+    Loader2,
+    CheckCircle2,
+    AlertCircle,
+    UserPlus,
+    TrendingUp,
+    FilterX,
+    ChevronRight,
+    LayoutPanelLeft,
+    Pencil
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import TableSkeleton from '../../components/shared/TableSkeleton';
 
 const API_URL = import.meta.env.VITE_API_URL;
 const DEPARTMENTS = ['CSE', 'ECE', 'EEE', 'MECH', 'IT'];
@@ -10,13 +33,11 @@ const DEPARTMENTS = ['CSE', 'ECE', 'EEE', 'MECH', 'IT'];
 const StudentManagement = () => {
     const { token } = useAuth();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
 
     // List & Filter State
-    const [students, setStudents] = useState([]);
-    const [studentsLoading, setStudentsLoading] = useState(false);
     const [filterBatch, setFilterBatch] = useState('');
     const [filterDept, setFilterDept] = useState('');
-    const [batches, setBatches] = useState([]);
 
     // Field Selector State
     const [showEmail, setShowEmail] = useState(true);
@@ -29,56 +50,68 @@ const StudentManagement = () => {
     const [editForm, setEditForm] = useState({ name: '', email: '', department: 'CSE', batch: '', admissionType: 'Counseling', parentContact: '' });
     const [editSubmitting, setEditSubmitting] = useState(false);
 
-    const fetchStudents = async () => {
-        try {
-            setStudentsLoading(true);
+    // Fetch Students
+    const { data: students = [], isLoading: studentsLoading } = useQuery({
+        queryKey: ['students', filterBatch, filterDept],
+        queryFn: async () => {
             const query = new URLSearchParams();
             if (filterBatch) query.append('batch', filterBatch);
             if (filterDept) query.append('dept', filterDept);
-
             const res = await fetch(`${API_URL}/api/hr/students?${query.toString()}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            const data = await res.json();
-            if (res.ok) {
-                setStudents(data);
-                // Extract unique batches if not filtering by batch (to populate dropdown)
-                if (!filterBatch) {
-                    const uniqueBatches = [...new Set(data.map(s => s.batch))].filter(Boolean);
-                    setBatches(uniqueBatches.sort());
-                }
-            }
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setStudentsLoading(false);
-        }
-    };
+            if (!res.ok) throw new Error('Failed to fetch students');
+            return res.json();
+        },
+        enabled: !!token
+    });
 
-    useEffect(() => {
-        if (token) {
-            fetchStudents();
-        }
-    }, [token, filterBatch, filterDept]);
+    // Fetch Batches
+    const { data: batches = [] } = useQuery({
+        queryKey: ['batches'],
+        queryFn: async () => {
+            const res = await fetch(`${API_URL}/api/hr/batches`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Failed to fetch batches');
+            return res.json();
+        },
+        enabled: !!token
+    });
 
-    const handleToggleStatus = async (id, name, currentStatus) => {
-        const actionStr = currentStatus === 'Active' ? 'deactivate' : 'activate';
-        if (!window.confirm(`Are you sure you want to ${actionStr} ${name}?`)) return;
-
-        try {
+    // Optimistic Status Toggle Mutation
+    const statusMutation = useMutation({
+        mutationFn: async ({ id }) => {
             const res = await fetch(`${API_URL}/api/hr/students/${id}/status`, {
                 method: 'PATCH',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (res.ok) {
-                toast.success(`Student ${actionStr}d successfully`);
-                fetchStudents();
-            } else {
-                toast.error(`Failed to ${actionStr} student`);
-            }
-        } catch (err) {
-            toast.error(`Error trying to ${actionStr} student`);
+            if (!res.ok) throw new Error('Status update failed');
+            return res.json();
+        },
+        onMutate: async ({ id }) => {
+            await queryClient.cancelQueries({ queryKey: ['students'] });
+            const previousStudents = queryClient.getQueryData(['students', filterBatch, filterDept]);
+
+            queryClient.setQueryData(['students', filterBatch, filterDept], (old) => 
+                old?.map(s => s.id === id ? { ...s, status: s.status === 'Active' ? 'Inactive' : 'Active' } : s)
+            );
+
+            return { previousStudents };
+        },
+        onError: (err, variables, context) => {
+            queryClient.setQueryData(['students', filterBatch, filterDept], context.previousStudents);
+            toast.error('Failed to update student status');
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['students'] });
         }
+    });
+
+    const handleToggleStatus = (id, name, currentStatus) => {
+        const actionStr = currentStatus === 'Active' ? 'deactivate' : 'activate';
+        if (!window.confirm(`Are you sure you want to ${actionStr} ${name}?`)) return;
+        statusMutation.mutate({ id });
     };
 
     const openEditModal = (student) => {
@@ -113,7 +146,7 @@ const StudentManagement = () => {
                 toast.success('Student updated successfully');
                 setIsEditModalOpen(false);
                 setEditingStudent(null);
-                fetchStudents();
+                queryClient.invalidateQueries({ queryKey: ['students'] });
             } else {
                 toast.error(data.error || 'Failed to update student');
             }
@@ -138,7 +171,7 @@ const StudentManagement = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
                 {/* Filters Sidebar */}
-                <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-border p-6 flex flex-col gap-6">
+                <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-border p-6 flex flex-col gap-6 self-start">
                     <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
                         <Filter className="w-5 h-5 text-primary" />
                         <h3 className="font-bold text-gray-800">Hierarchical Filters</h3>
@@ -152,11 +185,7 @@ const StudentManagement = () => {
                             className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-slate-50"
                         >
                             <option value="">All Departments</option>
-                            <option value="CSE">CSE</option>
-                            <option value="ECE">ECE</option>
-                            <option value="EEE">EEE</option>
-                            <option value="MECH">MECH</option>
-                            <option value="IT">IT</option>
+                            {DEPARTMENTS.map(dept => <option key={dept} value={dept}>{dept}</option>)}
                         </select>
                     </div>
 
@@ -168,7 +197,7 @@ const StudentManagement = () => {
                             className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-slate-50"
                         >
                             <option value="">All Batches</option>
-                            {batches.map(b => <option key={b} value={b}>{b}</option>)}
+                            {batches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                         </select>
                     </div>
 
@@ -195,75 +224,79 @@ const StudentManagement = () => {
                 </div>
 
                 {/* Table View */}
-                <div className="lg:col-span-3 bg-white rounded-xl shadow-sm border border-border overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50">
-                        <h2 className="text-xl font-bold text-slate-800">Student Directory ({students.length})</h2>
-                        <button onClick={fetchStudents} className="text-sm font-medium text-primary hover:underline">
-                            Refresh List
-                        </button>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-slate-50">
-                                <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Name & Reg No</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Dept & Batch</th>
-                                    {showEmail && <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>}
-                                    {showAdmission && <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Admission</th>}
-                                    {showParentContact && <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Parent Contact</th>}
-                                    <th className="px-6 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                                    <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 bg-white">
-                                {studentsLoading ? (
-                                    <tr><td colSpan="9" className="px-6 py-8 text-center text-slate-500"><Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />Loading...</td></tr>
-                                ) : students.length === 0 ? (
-                                    <tr><td colSpan="9" className="px-6 py-8 text-center text-slate-500">No students match your filters.</td></tr>
-                                ) : (
-                                    students.map((student) => (
-                                        <tr key={student.id} onClick={(e) => {
-                                            // Prevent click if clicking a button
-                                            if(e.target.closest('button')) return;
-                                            navigate(`/hr/student/${student.id}`);
-                                        }} className="hover:bg-slate-50 transition-colors cursor-pointer group">
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-bold text-slate-800">{student.name}</div>
-                                                <div className="text-xs text-slate-500 mt-0.5">{student.id}</div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-medium text-slate-700">{student.department}</div>
-                                                <div className="text-xs text-slate-500 mt-0.5">{student.batch}</div>
-                                            </td>
-                                            {showEmail && <td className="px-6 py-4 text-sm text-slate-600 truncate max-w-[150px]">{student.email}</td>}
-                                            {showAdmission && <td className="px-6 py-4 text-sm text-slate-600">{student.admissionType || '-'}</td>}
-                                            {showParentContact && <td className="px-6 py-4 text-sm text-slate-600">{student.parentContact || <span className="text-slate-400 italic text-xs">Not provided</span>}</td>}
-                                            <td className="px-6 py-4 text-center">
-                                                <button
-                                                    onClick={() => handleToggleStatus(student.id, student.name, student.status)}
-                                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${student.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-300'}`}
-                                                    title={`Toggle status (currently ${student.status})`}
-                                                >
-                                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${student.status === 'Active' ? 'translate-x-6' : 'translate-x-1'}`} />
-                                                </button>
-                                            </td>
-                                            <td className="px-6 py-4 text-right whitespace-nowrap">
-                                                <div className="flex justify-end gap-2">
-                                                    <button
-                                                        onClick={() => openEditModal(student)}
-                                                        className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                                                        title="Edit student"
-                                                    >
-                                                        <Pencil className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </td>
+                <div className="lg:col-span-3">
+                    {studentsLoading && students.length === 0 ? (
+                        <TableSkeleton rows={8} cols={6} />
+                    ) : (
+                        <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
+                            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50">
+                                <h2 className="text-xl font-bold text-slate-800">Student Directory ({students.length})</h2>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-slate-50">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Name & Reg No</th>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Dept & Batch</th>
+                                            {showEmail && <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>}
+                                            {showAdmission && <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Admission</th>}
+                                            {showParentContact && <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Parent Contact</th>}
+                                            <th className="px-6 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                                            <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100 bg-white">
+                                        {students.length === 0 ? (
+                                            <tr><td colSpan="9" className="px-6 py-8 text-center text-slate-500">No students match your filters.</td></tr>
+                                        ) : (
+                                            students.map((student) => (
+                                                <tr key={student.id} onClick={(e) => {
+                                                    if(e.target.closest('button')) return;
+                                                    navigate(`/hr/student/${student.id}`);
+                                                }} className="hover:bg-slate-50 transition-colors cursor-pointer group">
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm font-bold text-slate-800">{student.name}</div>
+                                                        <div className="text-xs text-slate-500 mt-0.5">{student.regNo}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm font-medium text-slate-700">{student.department}</div>
+                                                        <div className="text-xs text-slate-500 mt-0.5">{student.batch}</div>
+                                                    </td>
+                                                    {showEmail && <td className="px-6 py-4 text-sm text-slate-600 truncate max-w-[150px]">{student.email}</td>}
+                                                    {showAdmission && <td className="px-6 py-4 text-sm text-slate-600">{student.admissionType || '-'}</td>}
+                                                    {showParentContact && <td className="px-6 py-4 text-sm text-slate-600">{student.parentContact || <span className="text-slate-400 italic text-xs">Not provided</span>}</td>}
+                                                    <td className="px-6 py-4 text-center">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleToggleStatus(student.id, student.name, student.status);
+                                                            }}
+                                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 mx-auto ${student.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                                                            title={`Toggle status (currently ${student.status})`}
+                                                        >
+                                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${student.status === 'Active' ? 'translate-x-6' : 'translate-x-1'}`} />
+                                                        </button>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right border-l border-gray-50">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                openEditModal(student);
+                                                            }}
+                                                            className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                                            title="Edit student"
+                                                        >
+                                                            <Pencil className="w-4 h-4" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -274,7 +307,7 @@ const StudentManagement = () => {
                         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50 shrink-0">
                             <div>
                                 <h2 className="text-xl font-bold text-gray-800">Edit Student</h2>
-                                <p className="text-sm text-slate-500">Reg No: {editingStudent.id}</p>
+                                <p className="text-sm text-slate-500">Reg No: {editingStudent.regNo || editingStudent.id}</p>
                             </div>
                             <button onClick={() => setIsEditModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
                                 <X className="w-5 h-5" />
@@ -315,13 +348,16 @@ const StudentManagement = () => {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Batch</label>
-                                        <input
-                                            type="text"
+                                        <select
                                             value={editForm.batch}
                                             onChange={(e) => setEditForm({ ...editForm, batch: e.target.value })}
-                                            required
                                             className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none"
-                                        />
+                                        >
+                                            <option value="">Select Batch</option>
+                                            {batches.map(b => (
+                                                <option key={b.id} value={b.id}>{b.name}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
@@ -334,6 +370,8 @@ const StudentManagement = () => {
                                         >
                                             <option value="Counseling">Counseling</option>
                                             <option value="Management">Management</option>
+                                            <option value="Lateral Entry">Lateral Entry</option>
+                                            <option value="Transfer">Transfer</option>
                                         </select>
                                     </div>
                                     <div>
@@ -342,19 +380,28 @@ const StudentManagement = () => {
                                             type="tel"
                                             value={editForm.parentContact}
                                             onChange={(e) => setEditForm({ ...editForm, parentContact: e.target.value })}
+                                            placeholder="Mobile number"
                                             className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none"
-                                            placeholder="Contact number"
                                         />
                                     </div>
                                 </div>
                             </form>
                         </div>
-                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 shrink-0">
-                            <button type="button" onClick={() => setIsEditModalOpen(false)} className="px-5 py-2.5 text-gray-600 hover:bg-gray-200 font-medium rounded-lg transition-colors">
+                        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-slate-50 shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => setIsEditModalOpen(false)}
+                                className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
+                            >
                                 Cancel
                             </button>
-                            <button type="submit" form="edit-student-form" disabled={editSubmitting} className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2">
-                                {editSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><CheckCircle className="w-4 h-4" /> Save Changes</>}
+                            <button
+                                type="submit"
+                                form="edit-student-form"
+                                disabled={editSubmitting}
+                                className="px-6 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-all shadow-md shadow-primary/20 disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {editSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : 'Save Changes'}
                             </button>
                         </div>
                     </div>

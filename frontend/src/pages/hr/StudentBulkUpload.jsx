@@ -31,6 +31,7 @@ const StudentBulkUpload = () => {
         parentName: '', parentContact: ''
     });
     const [manualSubmitting, setManualSubmitting] = useState(false);
+    const [batches, setBatches] = useState([]);
 
     const fetchAnalytics = async () => {
         try {
@@ -45,8 +46,22 @@ const StudentBulkUpload = () => {
         }
     };
 
+    const fetchBatches = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/hr/batches`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setBatches(await res.json());
+            }
+        } catch (err) {
+            console.error('Failed to fetch batches', err);
+        }
+    };
+
     useEffect(() => {
         fetchAnalytics();
+        fetchBatches();
     }, []);
 
     const handleFileChange = (e) => {
@@ -284,8 +299,17 @@ const StudentBulkUpload = () => {
                                 <input type="text" name="regNo" value={manualForm.regNo} onChange={handleManualInputChange} required className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="REG-2024-001" />
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">Batch ID</label>
-                                <input type="text" name="batchId" value={manualForm.batchId} onChange={handleManualInputChange} required className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="CSE-2024" />
+                                <label className="block text-sm font-bold text-slate-700 mb-2">Select Batch</label>
+                                <select 
+                                    name="batchId" 
+                                    value={manualForm.batchId} 
+                                    onChange={handleManualInputChange} 
+                                    required 
+                                    className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                >
+                                    <option value="">Choose Batch</option>
+                                    {batches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                                </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2">Department</label>

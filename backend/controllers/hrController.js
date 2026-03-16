@@ -58,7 +58,18 @@ const bulkUploadStudents = async (req, res) => {
                 continue;
             }
 
-            // 5. Create User & Profile in a Transaction
+            // 5. Create Batch if it doesn't exist
+            try {
+                await prisma.batch.upsert({
+                    where: { id: batchId },
+                    update: {},
+                    create: { id: batchId, name: batchId }
+                });
+            } catch (err) {
+                console.error(`Error ensuring batch ${batchId} exists:`, err);
+            }
+
+            // 6. Create User & Profile in a Transaction
             try {
                 const hashedPassword = await bcrypt.hash('Welcome@123', 10);
 
@@ -434,6 +445,11 @@ const addStudentManual = async (req, res) => {
             return res.status(400).json({ error: 'Student with this email or RegNo already exists' });
         }
 
+        const batch = await prisma.batch.findUnique({ where: { id: batchId } });
+        if (!batch) {
+            return res.status(400).json({ error: 'Selected batch does not exist. Please create it first.' });
+        }
+
         const hashedPassword = await bcrypt.hash('Welcome@123', 10);
 
         await prisma.user.create({
@@ -624,6 +640,41 @@ const getAnalytics = async (req, res) => {
     }
 };
 
+const getBatches = async (req, res) => {
+    try {
+        const batches = await prisma.batch.findMany({
+            orderBy: { id: 'desc' }
+        });
+        return res.status(200).json(batches);
+    } catch (error) {
+        console.error('Error fetching batches:', error);
+        return res.status(500).json({ error: 'Failed to fetch batches' });
+    }
+};
+
+const addBatch = async (req, res) => {
+    try {
+        const { id, name } = req.body;
+        if (!id || !name) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const existing = await prisma.batch.findUnique({ where: { id } });
+        if (existing) {
+            return res.status(400).json({ error: 'Batch already exists' });
+        }
+
+        const batch = await prisma.batch.create({
+            data: { id, name }
+        });
+
+        return res.status(201).json(batch);
+    } catch (error) {
+        console.error('Error adding batch:', error);
+        return res.status(500).json({ error: 'Failed to add batch' });
+    }
+};
+
 module.exports = {
     bulkUploadStudents,
     getAllStudents,
@@ -639,5 +690,7 @@ module.exports = {
     editStudent,
     getStudentById,
     getStaffById,
-    getAllAdmins
+    getAllAdmins,
+    getBatches,
+    addBatch
 };

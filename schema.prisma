@@ -53,12 +53,20 @@ model StaffProfile {
   advisedBatch StudentProfile[] @relation("AdvisorRelation")
 }
 
+model Batch {
+  id              String           @id // e.g., '2023-2027'
+  name            String
+  studentProfiles StudentProfile[]
+  createdAt       DateTime         @default(now())
+}
+
 model StudentProfile {
   regNo          String   @id
   userId         String   @unique
   user           User     @relation(fields: [userId], references: [id])
   name           String
-  batchId        String
+  batchId        String?
+  batch          Batch?   @relation(fields: [batchId], references: [id])
   profileLocked  Boolean  @default(false)
   
   // Personal details — filled by student on first login

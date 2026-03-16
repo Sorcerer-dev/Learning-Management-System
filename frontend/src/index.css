@@ -54,14 +54,17 @@
     --ring: 243 75% 59%;
   }
 
-  /* HR Admin Theme: Teal #0D9488 (HSL: 175, 84%, 32%) */
+  /* HR Admin Theme: Purple and Black */
   .theme-hr {
-    --primary: 175 84% 32%;
+    --primary: 271 81% 53%;
     --primary-foreground: 0 0% 100%;
-    --sidebar-background: 175 84% 98%;
-    --sidebar-primary: 175 84% 32%;
-    --sidebar-accent: 175 50% 94%;
-    --ring: 175 84% 32%;
+    --sidebar-background: 0 0% 0%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 271 81% 53%;
+    --sidebar-accent: 271 81% 15%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 15%;
+    --ring: 271 81% 53%;
   }
 
   /* Staff Theme: Professional Blue #2563EB (HSL: 221, 83%, 53%) */

@@ -18,7 +18,9 @@ const {
     getStaffById,
     getAllAdmins,
     getBatches,
-    addBatch
+    addBatch,
+    getDepartments,
+    addDepartment
 } = require('../controllers/hrController');
 
 const router = express.Router();
@@ -167,6 +169,21 @@ router.post(
     verifyToken,
     authorizeTag(['HR', 'Admin']),
     addBatch
+);
+
+// Department Routes
+router.get(
+    '/departments',
+    verifyToken,
+    authorizeTag(['HR', 'Admin', 'Dean', 'Staff', 'Student']),
+    getDepartments
+);
+
+router.post(
+    '/departments',
+    verifyToken,
+    authorizeTag(['HR', 'Admin']),
+    addDepartment
 );
 
 module.exports = router;

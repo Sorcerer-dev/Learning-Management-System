@@ -34,6 +34,7 @@ const StudentBulkUpload = () => {
     });
     const [manualSubmitting, setManualSubmitting] = useState(false);
     const [batches, setBatches] = useState([]);
+    const [departments, setDepartments] = useState([]);
 
     const fetchAnalytics = async () => {
         try {
@@ -61,9 +62,27 @@ const StudentBulkUpload = () => {
         }
     };
 
+    const fetchDepartments = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/hr/departments`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setDepartments(data);
+                if (data.length > 0 && !manualForm.deptId) {
+                    setManualForm(prev => ({ ...prev, deptId: data[0].id }));
+                }
+            }
+        } catch (err) {
+            console.error('Failed to fetch departments', err);
+        }
+    };
+
     useEffect(() => {
         fetchAnalytics();
         fetchBatches();
+        fetchDepartments();
     }, []);
 
     const handleFileChange = (e) => {
@@ -168,7 +187,7 @@ const StudentBulkUpload = () => {
 
             if (res.ok) {
                 toast.success('Student added successfully!');
-                setManualForm({ name: '', email: '', regNo: '', batchId: '', deptId: 'CSE', admissionType: 'Counseling', parentName: '', parentContact: '' });
+                setManualForm({ name: '', email: '', regNo: '', batchId: '', deptId: departments.length > 0 ? departments[0].id : '', admissionType: 'Counseling', parentName: '', parentContact: '' });
                 // Note: fetchStudents is not defined in this file, removing it
                 fetchAnalytics(); // refresh chart
                 
@@ -325,12 +344,9 @@ const StudentBulkUpload = () => {
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2">Department</label>
-                                <select name="deptId" value={manualForm.deptId} onChange={handleManualInputChange} className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                                    <option value="CSE">CSE</option>
-                                    <option value="ECE">ECE</option>
-                                    <option value="EEE">EEE</option>
-                                    <option value="MECH">MECH</option>
-                                    <option value="IT">IT</option>
+                                <select name="deptId" value={manualForm.deptId} onChange={handleManualInputChange} className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-slate-700 font-medium">
+                                    <option value="">Choose Dept</option>
+                                    {departments.map(d => <option key={d.id} value={d.id}>{d.id}</option>)}
                                 </select>
                             </div>
                             <div>

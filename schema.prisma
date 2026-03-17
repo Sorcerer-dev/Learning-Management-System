@@ -54,6 +54,12 @@ model StaffProfile {
   advisedBatch StudentProfile[] @relation("AdvisorRelation")
 }
 
+model Department {
+  id        String   @id // e.g., 'CSE', 'ECE'
+  name      String
+  createdAt DateTime @default(now())
+}
+
 model Batch {
   id              String           @id // e.g., '2023-2027'
   name            String

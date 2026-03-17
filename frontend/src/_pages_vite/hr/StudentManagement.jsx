@@ -27,7 +27,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import TableSkeleton from '../../components/shared/TableSkeleton';
 
 const API_URL = import.meta.env.VITE_API_URL;
-const DEPARTMENTS = ['CSE', 'ECE', 'EEE', 'MECH', 'IT'];
 
 const StudentManagement = () => {
     const { token } = useAuth();
@@ -46,7 +45,7 @@ const StudentManagement = () => {
     // Edit Modal State
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingStudent, setEditingStudent] = useState(null);
-    const [editForm, setEditForm] = useState({ name: '', email: '', department: 'CSE', batch: '', admissionType: 'Counseling', parentContact: '' });
+    const [editForm, setEditForm] = useState({ name: '', email: '', department: '', batch: '', admissionType: 'Counseling', parentContact: '' });
     const [editSubmitting, setEditSubmitting] = useState(false);
 
     // Fetch Students
@@ -73,6 +72,19 @@ const StudentManagement = () => {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!res.ok) throw new Error('Failed to fetch batches');
+            return res.json();
+        },
+        enabled: !!token
+    });
+
+    // Fetch Departments
+    const { data: departments = [] } = useQuery({
+        queryKey: ['departments'],
+        queryFn: async () => {
+            const res = await fetch(`${API_URL}/api/hr/departments`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Failed to fetch departments');
             return res.json();
         },
         enabled: !!token
@@ -125,7 +137,7 @@ const StudentManagement = () => {
         setEditForm({
             name: student.name || '',
             email: student.email || '',
-            department: student.department || 'CSE',
+            department: student.department || (departments.length > 0 ? departments[0].id : ''),
             batch: student.batch || '',
             admissionType: student.admissionType || 'Counseling',
             parentContact: student.parentContact || ''
@@ -193,7 +205,7 @@ const StudentManagement = () => {
                             className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-slate-50"
                         >
                             <option value="">All Departments</option>
-                            {DEPARTMENTS.map(dept => <option key={dept} value={dept}>{dept}</option>)}
+                            {departments.map(dept => <option key={dept.id} value={dept.id}>{dept.id}</option>)}
                         </select>
                     </div>
 
@@ -354,7 +366,8 @@ const StudentManagement = () => {
                                             onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
                                             className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none"
                                         >
-                                            {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                                            <option value="">Select Department</option>
+                                            {departments.map(d => <option key={d.id} value={d.id}>{d.id}</option>)}
                                         </select>
                                     </div>
                                     <div>

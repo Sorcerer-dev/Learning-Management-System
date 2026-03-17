@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Pencil, UserX, Loader2, Inbox, Plus, X, Filter, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../context/ThemeContext';
 import { toast } from 'sonner';
@@ -8,7 +8,6 @@ import TableSkeleton from '../../components/shared/TableSkeleton';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const DEPARTMENTS = ['CSE', 'ECE', 'EEE', 'MECH', 'IT'];
 const DESIGNATIONS = ['HOD', 'Advisor', 'Mentor'];
 const DESIGNATION_LABELS = { HOD: 'Head of Department', Advisor: 'Advisor', Mentor: 'Mentor', HR: 'HR Officer' };
 const CATEGORIES = ['Staff'];
@@ -30,9 +29,34 @@ const StaffManagement = () => {
 
     // Add form state
     const [formData, setFormData] = useState({
-        name: '', email: '', staffId: '', deptId: 'CSE', category: 'Staff', functionalTags: [], adminRoleName: '', salary: ''
+        name: '', email: '', staffId: '', deptId: '', category: 'Staff', functionalTags: [], adminRoleName: '', salary: ''
     });
     const [submitting, setSubmitting] = useState(false);
+
+    // Fetch Departments
+    const { data: departments = [], isLoading: deptsLoading } = useQuery({
+        queryKey: ['departments'],
+        queryFn: async () => {
+            const res = await fetch(`${API_URL}/api/hr/departments`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Failed to fetch departments');
+            return res.json();
+        },
+        enabled: !!token,
+        onSuccess: (data) => {
+            if (data.length > 0 && !formData.deptId) {
+                setFormData(prev => ({ ...prev, deptId: data[0].id }));
+            }
+        }
+    });
+
+    // Effect to set initial deptId when depts are loaded
+    useEffect(() => {
+        if (departments.length > 0 && !formData.deptId) {
+            setFormData(prev => ({ ...prev, deptId: departments[0].id }));
+        }
+    }, [departments]);
 
     // Fetch Staff
     const { data: staffMembers = [], isLoading: staffLoading } = useQuery({
@@ -222,7 +246,7 @@ const StaffManagement = () => {
                             className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-slate-50"
                         >
                             <option value="">All Departments</option>
-                            {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                            {departments.map(d => <option key={d.id} value={d.id}>{d.id}</option>)}
                         </select>
                     </div>
 
@@ -370,7 +394,7 @@ const StaffManagement = () => {
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
                                         <select name="deptId" value={formData.deptId} onChange={handleInputChange} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                                            {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                                            {departments.map(d => <option key={d.id} value={d.id}>{d.id}</option>)}
                                         </select>
                                     </div>
                                 </div>
@@ -460,7 +484,7 @@ const StaffManagement = () => {
                                             onChange={(e) => setEditForm({ ...editForm, deptId: e.target.value })}
                                             className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                                         >
-                                            {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                                            {departments.map(d => <option key={d.id} value={d.id}>{d.id}</option>)}
                                         </select>
                                     </div>
                                     <div className="col-span-2">

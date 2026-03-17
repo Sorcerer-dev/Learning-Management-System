@@ -765,6 +765,41 @@ const addBatch = async (req, res) => {
     }
 };
 
+const getDepartments = async (req, res) => {
+    try {
+        const departments = await prisma.department.findMany({
+            orderBy: { id: 'asc' }
+        });
+        return res.status(200).json(departments);
+    } catch (error) {
+        console.error('Error fetching departments:', error);
+        return res.status(500).json({ error: 'Failed to fetch departments' });
+    }
+};
+
+const addDepartment = async (req, res) => {
+    try {
+        const { id, name } = req.body;
+        if (!id || !name) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const existing = await prisma.department.findUnique({ where: { id: id.toUpperCase() } });
+        if (existing) {
+            return res.status(400).json({ error: 'Department already exists' });
+        }
+
+        const department = await prisma.department.create({
+            data: { id: id.toUpperCase(), name }
+        });
+
+        return res.status(201).json(department);
+    } catch (error) {
+        console.error('Error adding department:', error);
+        return res.status(500).json({ error: 'Failed to add department' });
+    }
+};
+
 module.exports = {
     bulkUploadStudents,
     getAllStudents,
@@ -782,5 +817,7 @@ module.exports = {
     getStaffById,
     getAllAdmins,
     getBatches,
-    addBatch
+    addBatch,
+    getDepartments,
+    addDepartment
 };

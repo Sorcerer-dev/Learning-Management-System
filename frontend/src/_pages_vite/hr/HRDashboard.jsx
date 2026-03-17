@@ -57,10 +57,16 @@ const HRDashboard = () => {
 
     // UI states
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isSetupMenuOpen, setIsSetupMenuOpen] = useState(false);
     const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+    const [isDeptModalOpen, setIsDeptModalOpen] = useState(false);
     // Batch form state
     const [batchForm, setBatchForm] = useState({ id: '', name: '' });
     const [batchSubmitting, setBatchSubmitting] = useState(false);
+
+    // Department form state
+    const [deptForm, setDeptForm] = useState({ id: '', name: '' });
+    const [deptSubmitting, setDeptSubmitting] = useState(false);
 
 
 
@@ -95,6 +101,37 @@ const HRDashboard = () => {
         }
     };
 
+    const handleDeptSubmit = async (e) => {
+        e.preventDefault();
+        setDeptSubmitting(true);
+        try {
+            const res = await fetch(`${API_URL}/api/hr/departments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(deptForm)
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                toast.success('Department created successfully!');
+                setIsDeptModalOpen(false);
+                setDeptForm({ id: '', name: '' });
+                // Refresh analytics to show new dept in pie chart
+                refetchAnalytics();
+                queryClient.invalidateQueries({ queryKey: ['departments'] });
+            } else {
+                toast.error(data.error || 'Failed to create department');
+            }
+        } catch (err) {
+            toast.error('Network error. Failed to add department.');
+        } finally {
+            setDeptSubmitting(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -111,7 +148,7 @@ const HRDashboard = () => {
                     {/* Quick Add Menu */}
                     <div className="relative">
                         <button
-                            onClick={() => setIsMenuOpen(!isMenuOpen)}
+                            onClick={() => { setIsMenuOpen(!isMenuOpen); setIsSetupMenuOpen(false); }}
                             className="bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2"
                         >
                             <Plus className="w-5 h-5" /> Quick Add
@@ -124,11 +161,28 @@ const HRDashboard = () => {
                                 <button onClick={() => { navigate('/hr/staff'); setIsMenuOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 text-sm font-semibold border-b border-slate-100 flex items-center gap-3 text-slate-700">
                                     <Users className="w-4 h-4 text-blue-600" /> Staff
                                 </button>
-                                <button onClick={() => { setIsBatchModalOpen(true); setIsMenuOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 text-sm font-semibold border-b border-slate-100 flex items-center gap-3 text-slate-700">
-                                    <Plus className="w-4 h-4 text-orange-600" /> New Batch
-                                </button>
                                 <button onClick={() => { navigate('/hr/admin-details'); setIsMenuOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 text-sm font-semibold flex items-center gap-3 text-slate-700">
                                     <Shield className="w-4 h-4 text-purple-600" /> Admin & HR
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Academic Setup Menu */}
+                    <div className="relative">
+                        <button
+                            onClick={() => { setIsSetupMenuOpen(!isSetupMenuOpen); setIsMenuOpen(false); }}
+                            className="bg-white border border-border hover:bg-slate-50 text-slate-700 px-5 py-2.5 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2"
+                        >
+                            <LayoutPanelLeft className="w-5 h-5 text-indigo-600" /> Academic Setup
+                        </button>
+                        {isSetupMenuOpen && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white border border-border rounded-xl shadow-lg z-10 overflow-hidden">
+                                <button onClick={() => { setIsBatchModalOpen(true); setIsSetupMenuOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 text-sm font-semibold border-b border-slate-100 flex items-center gap-3 text-slate-700">
+                                    <Plus className="w-4 h-4 text-orange-600" /> New Batch
+                                </button>
+                                <button onClick={() => { setIsDeptModalOpen(true); setIsSetupMenuOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 text-sm font-semibold flex items-center gap-3 text-slate-700">
+                                    <Plus className="w-4 h-4 text-emerald-600" /> New Dept
                                 </button>
                             </div>
                         )}
@@ -230,7 +284,6 @@ const HRDashboard = () => {
 
 
 
-            {/* Batch Add Modal */}
             {isBatchModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200">
                     <div className="bg-white rounded-2xl shadow-xl border border-gray-100 w-full max-w-md overflow-hidden flex flex-col">
@@ -274,6 +327,56 @@ const HRDashboard = () => {
                             </button>
                             <button type="submit" form="batch-form" disabled={batchSubmitting} className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2">
                                 {batchSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Create Batch'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Department Add Modal */}
+            {isDeptModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-xl border border-gray-100 w-full max-w-md overflow-hidden flex flex-col">
+                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50">
+                            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                <Users className="w-5 h-5 text-emerald-600" /> Create New Department
+                            </h2>
+                            <button onClick={() => setIsDeptModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <form id="dept-form" onSubmit={handleDeptSubmit} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Dept ID (e.g. CSE, ECE)</label>
+                                    <input
+                                        type="text"
+                                        value={deptForm.id}
+                                        onChange={(e) => setDeptForm({ ...deptForm, id: e.target.value.toUpperCase() })}
+                                        required
+                                        className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                        placeholder="e.g., CSE"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Department Name</label>
+                                    <input
+                                        type="text"
+                                        value={deptForm.name}
+                                        onChange={(e) => setDeptForm({ ...deptForm, name: e.target.value })}
+                                        required
+                                        className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                        placeholder="e.g., Computer Science and Engineering"
+                                    />
+                                </div>
+                            </form>
+                        </div>
+                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 shrink-0">
+                            <button type="button" onClick={() => setIsDeptModalOpen(false)} className="px-5 py-2.5 text-gray-600 hover:bg-gray-200 font-medium rounded-lg transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" form="dept-form" disabled={deptSubmitting} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2">
+                                {deptSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Create Dept'}
                             </button>
                         </div>
                     </div>

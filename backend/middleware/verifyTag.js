@@ -25,12 +25,17 @@ function verifyTag(allowedTags = []) {
             req.user = decoded;
 
             // If specific tags are required, check access
-            if (allowedTags.length > 0 && !allowedTags.includes(decoded.tagAccess)) {
-                return res.status(403).json({
-                    error: 'Access denied. Insufficient permissions.',
-                    required: allowedTags,
-                    current: decoded.tagAccess,
-                });
+            if (allowedTags.length > 0) {
+                const userTags = decoded.tagAccess ? decoded.tagAccess.split(',').map(t => t.trim()) : [];
+                const hasAccess = userTags.some(tag => allowedTags.includes(tag));
+                
+                if (!hasAccess) {
+                    return res.status(403).json({
+                        error: 'Access denied. Insufficient permissions.',
+                        required: allowedTags,
+                        current: decoded.tagAccess,
+                    });
+                }
             }
 
             next();

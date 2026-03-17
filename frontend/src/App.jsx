@@ -5,31 +5,31 @@ import { useAuth } from './context/ThemeContext';
 import { Toaster } from 'sonner';
 
 // Auth Pages
-import LoginPage from './pages/auth/LoginPage';
+import LoginPage from './_pages_vite/auth/LoginPage';
 
 // Dashboard Pages
-import AdminDashboard from './pages/admin/AdminDashboard';
-import UniversityAnalytics from './pages/admin/UniversityAnalytics';
-import ResultPublication from './pages/admin/ResultPublication';
+import AdminDashboard from './_pages_vite/admin/AdminDashboard';
+import UniversityAnalytics from './_pages_vite/admin/UniversityAnalytics';
+import ResultPublication from './_pages_vite/admin/ResultPublication';
 
-import HRDashboard from './pages/hr/HRDashboard';
-import StaffManagement from './pages/hr/StaffManagement';
-import StudentBulkUpload from './pages/hr/StudentBulkUpload';
-import StudentManagement from './pages/hr/StudentManagement';
-import AdminDetails from './pages/hr/AdminDetails';
-import StudentDetail from './pages/hr/StudentDetail';
-import StaffDetail from './pages/hr/StaffDetail';
-import HRProfileSettings from './pages/hr/HRProfileSettings';
+import HRDashboard from './_pages_vite/hr/HRDashboard';
+import StaffManagement from './_pages_vite/hr/StaffManagement';
+import StudentBulkUpload from './_pages_vite/hr/StudentBulkUpload';
+import StudentManagement from './_pages_vite/hr/StudentManagement';
+import AdminDetails from './_pages_vite/hr/AdminDetails';
+import StudentDetail from './_pages_vite/hr/StudentDetail';
+import StaffDetail from './_pages_vite/hr/StaffDetail';
+import HRProfileSettings from './_pages_vite/hr/HRProfileSettings';
 
-import StaffDashboard from './pages/staff/StaffDashboard';
-import MentorGroup from './pages/staff/MentorGroup';
-import ClassAttendance from './pages/staff/ClassAttendance';
+import StaffDashboard from './_pages_vite/staff/StaffDashboard';
+import MentorGroup from './_pages_vite/staff/MentorGroup';
+import ClassAttendance from './_pages_vite/staff/ClassAttendance';
 
-import StudentDashboard from './pages/student/StudentDashboard';
-import StudentAttendance from './pages/student/StudentAttendance';
-import StudentResults from './pages/student/StudentResults';
-import FirstLoginForm from './pages/student/FirstLoginForm';
-import SettingsPage from './pages/student/SettingsPage';
+import StudentDashboard from './_pages_vite/student/StudentDashboard';
+import StudentAttendance from './_pages_vite/student/StudentAttendance';
+import StudentResults from './_pages_vite/student/StudentResults';
+import FirstLoginForm from './_pages_vite/student/FirstLoginForm';
+import SettingsPage from './_pages_vite/student/SettingsPage';
 
 // Protected Route wrapper
 function ProtectedRoute({ children }) {

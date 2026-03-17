@@ -18,7 +18,9 @@ const decodeToken = (token) => {
 
 // Maps backend tagAccess to frontend routing/theme role
 const getRoleFromTag = (tagAccess) => {
+    if (!tagAccess) return 'student';
     const roleMap = {
+        'Admin': 'admin',
         'Dean': 'admin',
         'CoE': 'admin',
         'HR': 'hr',
@@ -27,8 +29,15 @@ const getRoleFromTag = (tagAccess) => {
         'Advisor': 'staff',
         'Student': 'student',
         'CR': 'student',
+        'Staff': 'staff'
     };
-    return roleMap[tagAccess] || 'student';
+    
+    // Process comma-separated tags
+    const tags = tagAccess.split(',').map(t => t.trim());
+    for (const tag of tags) {
+        if (roleMap[tag]) return roleMap[tag];
+    }
+    return 'student'; // Fallback
 };
 
 export function AuthProvider({ children }) {

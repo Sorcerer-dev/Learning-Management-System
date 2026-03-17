@@ -18,7 +18,7 @@ const bulkUploadStudents = async (req, res) => {
         // 2. Process each row
         for (const row of data) {
             const regNo = (row.regNo || row.RegNo || '').toString().trim();
-            const email = (row.email || row.Email || '').toLowerCase().trim();
+            const email = (row.email || row.Email || '').toString().toLowerCase().trim();
 
             if (!regNo || !email) {
                 errors.push({ regNo: regNo || 'N/A', error: 'Missing required RegNo or Email' });
@@ -32,15 +32,15 @@ const bulkUploadStudents = async (req, res) => {
                         password: defaultPassword,
                         userType: 'Student',
                         tagAccess: 'Student',
-                        deptId: (row.deptId || row.Department || '').trim(),
+                        deptId: (row.deptId || row.Department || '').toString().trim(),
                         studentProfile: {
                             create: {
                                 regNo,
-                                name: (row.name || row.Name || '').trim(),
+                                name: (row.name || row.Name || '').toString().trim(),
                                 batchId: (row.batchId || row.Batch || '').toString().trim(),
-                                admissionType: (row.admissionType || row.AdmissionType || 'Counseling').trim(),
-                                parentName: (row.parentName || row.ParentName || '').trim() || null,
-                                parentContact: (row.parentContact || row.ParentContact || '').trim() || null,
+                                admissionType: (row.admissionType || row.AdmissionType || 'Counseling').toString().trim(),
+                                parentName: (row.parentName || row.ParentName || '').toString().trim() || null,
+                                parentContact: (row.parentContact || row.ParentContact || '').toString().trim() || null,
                                 profileLocked: false
                             }
                         }
@@ -48,7 +48,15 @@ const bulkUploadStudents = async (req, res) => {
                 });
                 successCount++;
             } catch (err) {
-                errors.push({ regNo, error: "Duplicate Email or RegNo" });
+                console.error(`Error uploading student ${regNo}:`, err);
+                let errorMessage = "Duplicate Email or RegNo";
+                if (err.code === 'P2002') {
+                    const field = err.meta?.target || 'RegNo/Email';
+                    errorMessage = `Conflict in ${field}`;
+                } else {
+                    errorMessage = err.message || "Unknown validation error";
+                }
+                errors.push({ regNo, error: errorMessage });
             }
         }
 

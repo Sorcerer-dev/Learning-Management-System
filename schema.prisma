@@ -44,6 +44,7 @@ model StaffProfile {
   salary       Float?   // Restricted to HR/Principal
   doj          DateTime @default(now())
   deptId       String
+  designation  String?
   religion     String?
   city         String?
   boardingStatus String?

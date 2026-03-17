@@ -106,47 +106,47 @@ const HRProfileSettings = () => {
     return (
         <div className="p-6 max-w-4xl mx-auto animate-in fade-in duration-300">
             <h1 className="text-3xl font-bold text-primary mb-2">Profile Settings</h1>
-            <p className="text-slate-500 mb-8">Manage your personal details and account security.</p>
+            <p className="text-slate-500 dark:text-slate-400 mb-8">Manage your personal details and account security.</p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Personal Details Card */}
-                <div className="bg-white rounded-2xl shadow-sm border border-border p-6 sm:p-8">
-                    <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
-                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-border dark:border-slate-800 p-6 sm:p-8">
+                    <div className="flex items-center gap-3 mb-6 border-b border-gray-100 dark:border-slate-800 pb-4">
+                        <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg">
                             <User className="w-6 h-6" />
                         </div>
-                        <h2 className="text-xl font-bold text-gray-800">Personal Details</h2>
+                        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Personal Details</h2>
                     </div>
 
                     <form onSubmit={handleProfileSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Full Name</label>
                             <input
                                 type="text"
                                 name="name"
                                 value={profileForm.name}
                                 onChange={handleProfileChange}
                                 required
-                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Contact</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Phone Contact</label>
                             <input
                                 type="tel"
                                 name="phone"
                                 value={profileForm.phone}
                                 onChange={handleProfileChange}
-                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-xs text-gray-400 font-normal">(Non-editable)</span></label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Email <span className="text-xs text-gray-400 dark:text-slate-500 font-normal">(Non-editable)</span></label>
                             <input
                                 type="text"
                                 value={user?.email || ''}
                                 disabled
-                                className="w-full border border-gray-200 bg-gray-50 text-gray-500 rounded-lg p-3 outline-none cursor-not-allowed"
+                                className="w-full border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 text-gray-500 dark:text-slate-400 rounded-lg p-3 outline-none cursor-not-allowed"
                             />
                         </div>
 
@@ -163,28 +163,28 @@ const HRProfileSettings = () => {
                 </div>
 
                 {/* Security Card */}
-                <div className="bg-white rounded-2xl shadow-sm border border-border p-6 sm:p-8">
-                    <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
-                        <div className="p-2 bg-green-50 text-green-600 rounded-lg">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-border dark:border-slate-800 p-6 sm:p-8">
+                    <div className="flex items-center gap-3 mb-6 border-b border-gray-100 dark:border-slate-800 pb-4">
+                        <div className="p-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg">
                             <Shield className="w-6 h-6" />
                         </div>
-                        <h2 className="text-xl font-bold text-gray-800">Security & Password</h2>
+                        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Security & Password</h2>
                     </div>
 
                     <form onSubmit={handlePasswordSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Current Password</label>
                             <input
                                 type="password"
                                 name="currentPassword"
                                 value={passwordForm.currentPassword}
                                 onChange={handlePasswordChange}
                                 required
-                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                                className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
                             />
                         </div>
                         <div className="pt-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">New Password</label>
                             <input
                                 type="password"
                                 name="newPassword"

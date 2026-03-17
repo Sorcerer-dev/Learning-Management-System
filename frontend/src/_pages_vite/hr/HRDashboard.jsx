@@ -133,16 +133,16 @@ const HRDashboard = () => {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 transition-colors duration-300">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h1 className="text-2xl font-bold text-gray-800">HR Operations</h1>
+                <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">HR Operations</h1>
 
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => navigate('/hr/student-management')}
-                        className="bg-white border border-border hover:bg-slate-50 text-slate-700 px-5 py-2.5 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2"
+                        className="bg-white dark:bg-slate-800 border border-border dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-gray-200 px-5 py-2.5 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2"
                     >
-                        <LayoutPanelLeft className="w-5 h-5 text-orange-600" /> Batches
+                        <LayoutPanelLeft className="w-5 h-5 text-orange-600 dark:text-orange-400" /> Batches
                     </button>
 
                     {/* Quick Add Menu */}
@@ -154,15 +154,15 @@ const HRDashboard = () => {
                             <Plus className="w-5 h-5" /> Quick Add
                         </button>
                         {isMenuOpen && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white border border-border rounded-xl shadow-lg z-10 overflow-hidden">
-                                <button onClick={() => { navigate('/hr/students'); setIsMenuOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 text-sm font-semibold border-b border-slate-100 flex items-center gap-3 text-slate-700">
-                                    <GraduationCap className="w-4 h-4 text-emerald-600" /> Student
+                            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-border dark:border-slate-800 rounded-xl shadow-lg z-10 overflow-hidden">
+                                <button onClick={() => { navigate('/hr/students'); setIsMenuOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-semibold border-b border-slate-100 dark:border-slate-800 flex items-center gap-3 text-slate-700 dark:text-gray-200">
+                                    <GraduationCap className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Student
                                 </button>
-                                <button onClick={() => { navigate('/hr/staff'); setIsMenuOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 text-sm font-semibold border-b border-slate-100 flex items-center gap-3 text-slate-700">
-                                    <Users className="w-4 h-4 text-blue-600" /> Staff
+                                <button onClick={() => { navigate('/hr/staff'); setIsMenuOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-semibold border-b border-slate-100 dark:border-slate-800 flex items-center gap-3 text-slate-700 dark:text-gray-200">
+                                    <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Staff
                                 </button>
-                                <button onClick={() => { navigate('/hr/admin-details'); setIsMenuOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 text-sm font-semibold flex items-center gap-3 text-slate-700">
-                                    <Shield className="w-4 h-4 text-purple-600" /> Admin & HR
+                                <button onClick={() => { navigate('/hr/admin-details'); setIsMenuOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-semibold flex items-center gap-3 text-slate-700 dark:text-gray-200">
+                                    <Shield className="w-4 h-4 text-purple-600 dark:text-purple-400" /> Admin & HR
                                 </button>
                             </div>
                         )}
@@ -172,17 +172,17 @@ const HRDashboard = () => {
                     <div className="relative">
                         <button
                             onClick={() => { setIsSetupMenuOpen(!isSetupMenuOpen); setIsMenuOpen(false); }}
-                            className="bg-white border border-border hover:bg-slate-50 text-slate-700 px-5 py-2.5 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2"
+                            className="bg-white dark:bg-slate-800 border border-border dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-gray-200 px-5 py-2.5 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2"
                         >
-                            <LayoutPanelLeft className="w-5 h-5 text-indigo-600" /> Academic Setup
+                            <LayoutPanelLeft className="w-5 h-5 text-indigo-600 dark:text-indigo-400" /> Academic Setup
                         </button>
                         {isSetupMenuOpen && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white border border-border rounded-xl shadow-lg z-10 overflow-hidden">
-                                <button onClick={() => { setIsBatchModalOpen(true); setIsSetupMenuOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 text-sm font-semibold border-b border-slate-100 flex items-center gap-3 text-slate-700">
-                                    <Plus className="w-4 h-4 text-orange-600" /> New Batch
+                            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-border dark:border-slate-800 rounded-xl shadow-lg z-10 overflow-hidden">
+                                <button onClick={() => { setIsBatchModalOpen(true); setIsSetupMenuOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-semibold border-b border-slate-100 dark:border-slate-800 flex items-center gap-3 text-slate-700 dark:text-gray-200">
+                                    <Plus className="w-4 h-4 text-orange-600 dark:text-orange-400" /> New Batch
                                 </button>
-                                <button onClick={() => { setIsDeptModalOpen(true); setIsSetupMenuOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 text-sm font-semibold flex items-center gap-3 text-slate-700">
-                                    <Plus className="w-4 h-4 text-emerald-600" /> New Dept
+                                <button onClick={() => { setIsDeptModalOpen(true); setIsSetupMenuOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-semibold flex items-center gap-3 text-slate-700 dark:text-gray-200">
+                                    <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> New Dept
                                 </button>
                             </div>
                         )}
@@ -221,8 +221,8 @@ const HRDashboard = () => {
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Pie Chart Card */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col">
-                    <h2 className="text-lg font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">Student Distribution by Department</h2>
+                <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-800 p-6 flex flex-col">
+                    <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4 border-b border-gray-100 dark:border-slate-800 pb-2">Student Distribution by Department</h2>
                     <div className="flex-1 min-h-[300px] flex items-center justify-center">
                         {loading ? (
                             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -242,7 +242,10 @@ const HRDashboard = () => {
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
-                                    <Tooltip />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: 'var(--tw-fill-slate-900, #fff)', border: 'none', borderRadius: '8px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                        itemStyle={{ color: 'inherit' }}
+                                    />
                                     <Legend verticalAlign="bottom" height={36} />
                                 </PieChart>
                             </ResponsiveContainer>
@@ -253,9 +256,9 @@ const HRDashboard = () => {
                 </div>
 
                 {/* Batch Trends Bar Chart Card */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col">
-                    <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
-                        <h2 className="text-lg font-bold text-gray-800">Batch Enrollment Trends</h2>
+                <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-800 p-6 flex flex-col">
+                    <div className="flex justify-between items-center mb-4 border-b border-gray-100 dark:border-slate-800 pb-2">
+                        <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Batch Enrollment Trends</h2>
                         <Link to="/hr/student-management" className="text-xs font-bold text-primary hover:underline">View All Students</Link>
                     </div>
                     <div className="flex-1 min-h-[300px] flex items-center justify-center w-full mt-2">
@@ -267,7 +270,10 @@ const HRDashboard = () => {
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
                                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} dy={10} />
                                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} />
-                                    <Tooltip cursor={{ fill: '#F1F5F9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                    <Tooltip 
+                                        cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }} 
+                                        contentStyle={{ borderRadius: '8px', border: 'none', backgroundColor: 'var(--tw-fill-slate-900, #fff)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} 
+                                    />
                                     <Bar dataKey="students" radius={[4, 4, 0, 0]}>
                                         {analytics.batchTrends.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -286,10 +292,10 @@ const HRDashboard = () => {
 
             {isBatchModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-xl border border-gray-100 w-full max-w-md overflow-hidden flex flex-col">
-                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50">
-                            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                                <LayoutPanelLeft className="w-5 h-5 text-orange-600" /> Create New Batch
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 w-full max-w-md overflow-hidden flex flex-col">
+                        <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+                            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                                <LayoutPanelLeft className="w-5 h-5 text-orange-600 dark:text-orange-400" /> Create New Batch
                             </h2>
                             <button onClick={() => setIsBatchModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
                                 <X className="w-5 h-5" />
@@ -298,31 +304,31 @@ const HRDashboard = () => {
                         <div className="p-6">
                             <form id="batch-form" onSubmit={handleBatchSubmit} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">Batch ID (Internal)</label>
+                                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Batch ID (Internal)</label>
                                     <input
                                         type="text"
                                         value={batchForm.id}
                                         onChange={(e) => setBatchForm({ ...batchForm, id: e.target.value })}
                                         required
-                                        className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                        className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                                         placeholder="e.g., 2023-2027"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">Batch Display Name</label>
+                                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Batch Display Name</label>
                                     <input
                                         type="text"
                                         value={batchForm.name}
                                         onChange={(e) => setBatchForm({ ...batchForm, name: e.target.value })}
                                         required
-                                        className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                        className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                                         placeholder="e.g., 2023-2027"
                                     />
                                 </div>
                             </form>
                         </div>
-                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 shrink-0">
-                            <button type="button" onClick={() => setIsBatchModalOpen(false)} className="px-5 py-2.5 text-gray-600 hover:bg-gray-200 font-medium rounded-lg transition-colors">
+                        <div className="p-6 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/30 flex justify-end gap-3 shrink-0">
+                            <button type="button" onClick={() => setIsBatchModalOpen(false)} className="px-5 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-700 font-medium rounded-lg transition-colors">
                                 Cancel
                             </button>
                             <button type="submit" form="batch-form" disabled={batchSubmitting} className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2">
@@ -336,10 +342,10 @@ const HRDashboard = () => {
             {/* Department Add Modal */}
             {isDeptModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-xl border border-gray-100 w-full max-w-md overflow-hidden flex flex-col">
-                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50">
-                            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                                <Users className="w-5 h-5 text-emerald-600" /> Create New Department
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 w-full max-w-md overflow-hidden flex flex-col">
+                        <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+                            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                                <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> Create New Department
                             </h2>
                             <button onClick={() => setIsDeptModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
                                 <X className="w-5 h-5" />
@@ -348,31 +354,31 @@ const HRDashboard = () => {
                         <div className="p-6">
                             <form id="dept-form" onSubmit={handleDeptSubmit} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">Dept ID (e.g. CSE, ECE)</label>
+                                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Dept ID (e.g. CSE, ECE)</label>
                                     <input
                                         type="text"
                                         value={deptForm.id}
                                         onChange={(e) => setDeptForm({ ...deptForm, id: e.target.value.toUpperCase() })}
                                         required
-                                        className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                        className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                                         placeholder="e.g., CSE"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">Department Name</label>
+                                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Department Name</label>
                                     <input
                                         type="text"
                                         value={deptForm.name}
                                         onChange={(e) => setDeptForm({ ...deptForm, name: e.target.value })}
                                         required
-                                        className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                        className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                                         placeholder="e.g., Computer Science and Engineering"
                                     />
                                 </div>
                             </form>
                         </div>
-                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 shrink-0">
-                            <button type="button" onClick={() => setIsDeptModalOpen(false)} className="px-5 py-2.5 text-gray-600 hover:bg-gray-200 font-medium rounded-lg transition-colors">
+                        <div className="p-6 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/30 flex justify-end gap-3 shrink-0">
+                            <button type="button" onClick={() => setIsDeptModalOpen(false)} className="px-5 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-700 font-medium rounded-lg transition-colors">
                                 Cancel
                             </button>
                             <button type="submit" form="dept-form" disabled={deptSubmitting} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2">
@@ -387,16 +393,16 @@ const HRDashboard = () => {
 };
 
 const StatCard = ({ title, value, icon, loading }) => (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+    <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-800 transition-colors duration-300">
         <div className="flex items-center justify-between mb-4">
-            <h3 className="text-gray-500 text-sm font-medium">{title}</h3>
+            <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium">{title}</h3>
             <div className="p-2 bg-primary/10 rounded-lg">{icon}</div>
         </div>
         <div className="flex items-baseline space-x-2">
             {loading ? (
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
             ) : (
-                <h2 className="text-2xl font-bold text-gray-900">{value}</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{value}</h2>
             )}
         </div>
     </div>

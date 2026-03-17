@@ -216,10 +216,10 @@ const StaffManagement = () => {
 
     return (
         <div className="p-6 max-w-7xl mx-auto animate-in fade-in duration-300">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 transition-colors duration-300">
                 <div>
                     <h1 className="text-3xl font-bold text-primary">Staff Management</h1>
-                    <p className="text-slate-500 mt-1">Manage staff details and view department-wise distribution.</p>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1">Manage staff details and view department-wise distribution.</p>
                 </div>
                 <button
                     onClick={() => setIsAddModalOpen(true)}
@@ -232,18 +232,18 @@ const StaffManagement = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                 {/* Filters */}
-                <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-border p-6 flex flex-col gap-6">
-                    <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
+                <div className="lg:col-span-1 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-border dark:border-slate-800 p-6 flex flex-col gap-6">
+                    <div className="flex items-center gap-2 border-b border-gray-100 dark:border-slate-800 pb-3">
                         <Filter className="w-5 h-5 text-primary" />
-                        <h3 className="font-bold text-gray-800">Advanced Filters</h3>
+                        <h3 className="font-bold text-gray-800 dark:text-gray-100">Advanced Filters</h3>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Department</label>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Department</label>
                         <select
                             value={filterDept}
                             onChange={(e) => setFilterDept(e.target.value)}
-                            className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-slate-50"
+                            className="w-full border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-slate-50 dark:bg-slate-800 text-gray-700 dark:text-gray-200"
                         >
                             <option value="">All Departments</option>
                             {departments.map(d => <option key={d.id} value={d.id}>{d.id}</option>)}
@@ -251,11 +251,11 @@ const StaffManagement = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Designation</label>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Designation</label>
                         <select
                             value={filterDesignation}
                             onChange={(e) => setFilterDesignation(e.target.value)}
-                            className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-slate-50"
+                            className="w-full border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-slate-50 dark:bg-slate-800 text-gray-700 dark:text-gray-200"
                         >
                             <option value="">All Designations</option>
                             {DESIGNATIONS.map(d => <option key={d} value={d}>{DESIGNATION_LABELS[d]}</option>)}
@@ -264,8 +264,8 @@ const StaffManagement = () => {
                 </div>
 
                 {/* Chart Card */}
-                <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-border p-6 flex flex-col min-h-[300px]">
-                    <h3 className="font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">Dept-wise Staff Strength</h3>
+                <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-border dark:border-slate-800 p-6 flex flex-col min-h-[300px]">
+                    <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-4 border-b border-gray-100 dark:border-slate-800 pb-2">Dept-wise Staff Strength</h3>
                     <div className="flex-1 w-full mt-2 h-[250px]">
                         {analytics?.staffByDeptRole?.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
@@ -296,47 +296,47 @@ const StaffManagement = () => {
                 {staffLoading && staffMembers.length === 0 ? (
                     <TableSkeleton rows={8} cols={6} />
                 ) : (
-                    <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
-                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50">
-                            <h2 className="text-xl font-bold text-slate-800">Staff Records ({staffMembers.length})</h2>
+                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-border dark:border-slate-800 overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-gray-100">Staff Records ({staffMembers.length})</h2>
                         </div>
                         <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-slate-50">
+                            <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-800">
+                                <thead className="bg-slate-50 dark:bg-slate-800/80">
                                     <tr>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Department</th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">Designation</th>
-                                        {hasSalaryColumn && <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Salary</th>}
-                                        <th className="px-6 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                                        <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">ID</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Name</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Department</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden md:table-cell">Designation</th>
+                                        {hasSalaryColumn && <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Salary</th>}
+                                        <th className="px-6 py-4 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                                        <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100 bg-white">
+                                <tbody className="divide-y divide-gray-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
                                     {staffMembers.length === 0 ? (
                                         <tr><td colSpan="9" className="px-6 py-12 text-center">
-                                            <Inbox className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                                            <h3 className="text-lg font-bold text-slate-700">No staff records match</h3>
-                                            <p className="text-sm text-slate-400 mt-2">Try adjusting your filters.</p>
+                                            <Inbox className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto mb-4" />
+                                            <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">No staff records match</h3>
+                                            <p className="text-sm text-slate-400 dark:text-slate-500 mt-2">Try adjusting your filters.</p>
                                         </td></tr>
                                     ) : (
                                         staffMembers.map((staff) => (
                                             <tr key={staff.id} onClick={(e) => {
                                                 if(e.target.closest('button')) return;
                                                 // navigate(`/hr/staff/${staff.id}`); // Placeholder for detail view
-                                            }} className="hover:bg-slate-50 transition-colors cursor-pointer group">
-                                                <td className="px-6 py-4 text-sm font-medium text-slate-700 whitespace-nowrap">{staff.id}</td>
-                                                <td className="px-6 py-4 text-sm font-bold text-slate-800 whitespace-nowrap">{staff.name}</td>
-                                                <td className="px-6 py-4 text-sm text-slate-600 whitespace-nowrap">{staff.department}</td>
-                                                <td className="px-6 py-4 text-sm text-slate-600 hidden md:table-cell whitespace-nowrap">{staff.designation || '-'}</td>
+                                            }} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group">
+                                                <td className="px-6 py-4 text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">{staff.id}</td>
+                                                <td className="px-6 py-4 text-sm font-bold text-slate-800 dark:text-gray-200 whitespace-nowrap">{staff.name}</td>
+                                                <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">{staff.department}</td>
+                                                <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400 hidden md:table-cell whitespace-nowrap">{staff.designation || '-'}</td>
                                                 {hasSalaryColumn && (
-                                                    <td className="px-6 py-4 text-sm font-medium text-slate-700 whitespace-nowrap">
+                                                    <td className="px-6 py-4 text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
                                                         {staff.salary ? `$${staff.salary.toLocaleString()}` : '-'}
                                                     </td>
                                                 )}
                                                 <td className="px-6 py-4 text-center whitespace-nowrap">
-                                                    <span className={`px-3 py-1 text-xs font-bold rounded-full ${staff.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                                                    <span className={`px-3 py-1 text-xs font-bold rounded-full ${staff.status === 'Active' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'}`}>
                                                         {staff.status}
                                                     </span>
                                                 </td>
@@ -369,31 +369,31 @@ const StaffManagement = () => {
             {/* Add Staff Modal */}
             {isAddModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-xl border border-gray-100 w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50 shrink-0">
-                            <h2 className="text-xl font-bold text-gray-800">Add New Staff</h2>
-                            <button onClick={() => setIsAddModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 shrink-0">
+                            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Add New Staff</h2>
+                            <button onClick={() => setIsAddModalOpen(false)} className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full transition-colors text-gray-500 dark:text-slate-400">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
                         <div className="p-6 overflow-y-auto">
                             <form id="add-staff-form" onSubmit={handleAddStaff} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                                    <input type="text" name="name" value={formData.name} onChange={handleInputChange} required className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="Jane Doe" />
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Full Name</label>
+                                    <input type="text" name="name" value={formData.name} onChange={handleInputChange} required className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="Jane Doe" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                                    <input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="jane.doe@univ.edu" />
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Email Address</label>
+                                    <input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="jane.doe@univ.edu" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Staff ID</label>
-                                        <input type="text" name="staffId" value={formData.staffId} onChange={handleInputChange} required className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="EMP-001" />
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Staff ID</label>
+                                        <input type="text" name="staffId" value={formData.staffId} onChange={handleInputChange} required className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="EMP-001" />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                                        <select name="deptId" value={formData.deptId} onChange={handleInputChange} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Department</label>
+                                        <select name="deptId" value={formData.deptId} onChange={handleInputChange} className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none">
                                             {departments.map(d => <option key={d.id} value={d.id}>{d.id}</option>)}
                                         </select>
                                     </div>
@@ -426,11 +426,11 @@ const StaffManagement = () => {
                                         <input type="number" name="salary" value={formData.salary} onChange={handleInputChange} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="e.g. 50000" />
                                     </div>
                                 </div>
-                                <p className="text-xs text-gray-500 mt-2">Password will be defaulted to <strong>Welcome@123</strong></p>
+                                <p className="text-xs text-gray-500 dark:text-slate-500 mt-2">Password will be defaulted to <strong>Welcome@123</strong></p>
                             </form>
                         </div>
-                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 shrink-0">
-                            <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-5 py-2.5 text-gray-600 hover:bg-gray-200 font-medium rounded-lg transition-colors">
+                        <div className="p-6 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/30 flex justify-end gap-3 shrink-0">
+                            <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-5 py-2.5 text-gray-600 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-700 font-medium rounded-lg transition-colors">
                                 Cancel
                             </button>
                             <button type="submit" form="add-staff-form" disabled={submitting} className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2">
@@ -444,65 +444,65 @@ const StaffManagement = () => {
             {/* Edit Staff Modal */}
             {isEditModalOpen && editingStaff && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-xl border border-gray-100 w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50 shrink-0">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 shrink-0">
                             <div>
-                                <h2 className="text-xl font-bold text-gray-800">Edit Staff Member</h2>
-                                <p className="text-sm text-slate-500">ID: {editingStaff.id}</p>
+                                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Edit Staff Member</h2>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">ID: {editingStaff.id}</p>
                             </div>
-                            <button onClick={() => setIsEditModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
+                            <button onClick={() => setIsEditModalOpen(false)} className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full transition-colors text-gray-500 dark:text-slate-400">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
                         <div className="p-6 overflow-y-auto">
                             <form id="edit-staff-form" onSubmit={handleEditStaff} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Full Name</label>
                                     <input
                                         type="text"
                                         value={editForm.name}
                                         onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                                         required
-                                        className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                        className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                               <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Email Address</label>
                                     <input
                                         type="email"
                                         value={editForm.email}
                                         onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                                         required
-                                        className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                        className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                                     />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Department</label>
                                         <select
                                             value={editForm.deptId}
                                             onChange={(e) => setEditForm({ ...editForm, deptId: e.target.value })}
-                                            className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                            className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                                         >
                                             {departments.map(d => <option key={d.id} value={d.id}>{d.id}</option>)}
                                         </select>
                                     </div>
-                                    <div className="col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Functional Tags (Staff Role)</label>
-                                        <div className="flex flex-wrap gap-4 bg-white p-3 border border-gray-300 rounded-lg">
+                                   <div className="col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Functional Tags (Staff Role)</label>
+                                        <div className="flex flex-wrap gap-4 bg-white dark:bg-slate-800 p-3 border border-gray-300 dark:border-slate-700 rounded-lg">
                                             {DESIGNATIONS.map(d => (
-                                                <label key={d} className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700">
-                                                    <input 
-                                                        type="checkbox" 
-                                                        value={d} 
+                                                <label key={d} className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700 dark:text-slate-300">
+                                                    <input
+                                                        type="checkbox"
+                                                        value={d}
                                                         checked={editForm.functionalTags.includes(d)}
                                                         onChange={(e) => {
-                                                            const tags = e.target.checked 
-                                                                ? [...editForm.functionalTags, d] 
+                                                            const tags = e.target.checked
+                                                                ? [...editForm.functionalTags, d]
                                                                 : editForm.functionalTags.filter(t => t !== d);
                                                             setEditForm({...editForm, functionalTags: tags});
                                                         }}
-                                                        className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                                                        className="w-4 h-4 rounded border-gray-300 dark:border-slate-700 text-primary focus:ring-primary cursor-pointer"
                                                     />
                                                     {DESIGNATION_LABELS[d]}
                                                 </label>
@@ -510,33 +510,33 @@ const StaffManagement = () => {
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Salary (Optional)</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Salary (Optional)</label>
                                         <input
                                             type="number"
                                             value={editForm.salary}
                                             onChange={(e) => setEditForm({ ...editForm, salary: e.target.value })}
-                                            className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                            className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                                             placeholder="e.g. 50000"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone (Optional)</label>
+                                   <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Phone (Optional)</label>
                                         <input
                                             type="tel"
                                             value={editForm.phone}
                                             onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                                            className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                            className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                                             placeholder="+91 9876543210"
                                         />
                                     </div>
                                 </div>
                             </form>
                         </div>
-                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 shrink-0">
-                            <button type="button" onClick={() => setIsEditModalOpen(false)} className="px-5 py-2.5 text-gray-600 hover:bg-gray-200 font-medium rounded-lg transition-colors">
+                        <div className="p-6 border-t border-gray-100 bg-gray-50 dark:border-slate-800 dark:bg-slate-800/30 flex justify-end gap-3 shrink-0">
+                            <button type="button" onClick={() => setIsEditModalOpen(false)} className="px-5 py-2.5 text-gray-600 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-700 font-medium rounded-lg transition-colors">
                                 Cancel
                             </button>
-                            <button type="submit" form="edit-staff-form" disabled={editSubmitting} className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2">
+                           <button type="submit" form="edit-staff-form" disabled={editSubmitting} className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2">
                                 {editSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><CheckCircle className="w-4 h-4" /> Save Changes</>}
                             </button>
                         </div>

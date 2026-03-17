@@ -61,13 +61,13 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     return (
         <aside
             className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-sidebar-primary text-sidebar-primary-foreground 
+        fixed inset-y-0 left-0 z-40 w-64 bg-sidebar text-sidebar-foreground 
         transition-transform duration-300 ease-in-out lg:static lg:translate-x-0
         flex flex-col border-r border-sidebar-border shadow-lg
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}
         >
-            <div className="h-16 flex items-center justify-center border-b border-white/10 shrink-0 px-6">
+            <div className="h-16 flex items-center justify-center border-b border-sidebar-border shrink-0 px-6">
                 <h1 className="text-xl font-bold tracking-wider uppercase">UMS Portal</h1>
             </div>
 
@@ -80,10 +80,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                             to={link.path}
                             onClick={() => setIsOpen(false)}
                             className={`
-                flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors
+                flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200
                 ${isActive
-                                    ? 'bg-white/20 font-medium shadow-sm'
-                                    : 'hover:bg-white/10 text-white/80 hover:text-white'
+                                    ? 'bg-sidebar-accent text-sidebar-foreground font-bold shadow-sm'
+                                    : 'hover:bg-sidebar-accent/50 text-sidebar-foreground/80 hover:text-sidebar-foreground'
                                 }
               `}
                         >
@@ -94,10 +94,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 })}
             </div>
 
-            <div className="p-4 border-t border-white/10 shrink-0">
+            <div className="p-4 border-t border-sidebar-border shrink-0">
                 <button
                     onClick={handleLogout}
-                    className="flex items-center space-x-3 px-4 py-3 w-full rounded-lg hover:bg-red-500/20 text-white/80 hover:text-white transition-colors"
+                    className="flex items-center space-x-3 px-4 py-3 w-full rounded-lg hover:bg-red-500/20 text-sidebar-foreground/80 hover:text-red-500 transition-colors"
                 >
                     <LogOut className="w-5 h-5" />
                     <span>Logout</span>

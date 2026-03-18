@@ -149,7 +149,13 @@ const getAllStudents = async (req, res) => {
             status: s.user?.status,
             admissionType: s.admissionType,
             parentName: s.parentName || null,
-            parentContact: s.parentContact || null
+            parentContact: s.parentContact || null,
+            phone: s.phone || null,
+            city: s.city || null,
+            boardingStatus: s.boardingStatus || null,
+            profilePic: s.profilePic || null,
+            doj: s.doj,
+            profileLocked: s.profileLocked
         }));
 
         return res.status(200).json(formattedStudents);
@@ -175,7 +181,9 @@ const getStudentById = async (req, res) => {
                 marks: true,
                 arrears: true,
                 mentor: true,
-                advisor: true
+                advisor: true,
+                attendance: true,
+                fees: true
             }
         });
 
@@ -187,6 +195,32 @@ const getStudentById = async (req, res) => {
     } catch (error) {
         console.error('Error fetching student by ID:', error);
         return res.status(500).json({ error: 'Failed to fetch student details' });
+    }
+};
+
+const toggleProfileLock = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const student = await prisma.studentProfile.findUnique({
+            where: { regNo: id }
+        });
+
+        if (!student) {
+            return res.status(404).json({ error: 'Student not found' });
+        }
+
+        const updated = await prisma.studentProfile.update({
+            where: { regNo: id },
+            data: { profileLocked: !student.profileLocked }
+        });
+
+        return res.status(200).json({ 
+            message: `Profile ${updated.profileLocked ? 'locked' : 'unlocked'} successfully`,
+            profileLocked: updated.profileLocked
+        });
+    } catch (error) {
+        console.error('Error toggling profile lock:', error);
+        return res.status(500).json({ error: 'Failed to toggle profile lock' });
     }
 };
 
@@ -220,7 +254,7 @@ const deleteStudent = async (req, res) => {
 const editStudent = async (req, res) => {
     try {
         const { id } = req.params; // regNo
-        const { name, email, department, batch, admissionType, parentContact } = req.body;
+        const { name, email, department, batch, admissionType, parentName, parentContact, phone, address, dob, gender, bloodGroup, religion, city, boardingStatus, profilePic, doj } = req.body;
 
         const student = await prisma.studentProfile.findUnique({
             where: { regNo: id },
@@ -246,7 +280,18 @@ const editStudent = async (req, res) => {
                     ...(name ? { name } : {}),
                     ...(batch ? { batchId: batch } : {}),
                     ...(admissionType ? { admissionType } : {}),
+                    ...(parentName !== undefined ? { parentName: parentName || null } : {}),
                     ...(parentContact !== undefined ? { parentContact: parentContact || null } : {}),
+                    ...(phone !== undefined ? { phone: phone || null } : {}),
+                    ...(address !== undefined ? { address: address || null } : {}),
+                    ...(dob !== undefined ? { dob: dob ? new Date(dob) : null } : {}),
+                    ...(gender !== undefined ? { gender: gender || null } : {}),
+                    ...(bloodGroup !== undefined ? { bloodGroup: bloodGroup || null } : {}),
+                    ...(religion !== undefined ? { religion: religion || null } : {}),
+                    ...(city !== undefined ? { city: city || null } : {}),
+                    ...(boardingStatus !== undefined ? { boardingStatus: boardingStatus || null } : {}),
+                    ...(profilePic !== undefined ? { profilePic: profilePic || null } : {}),
+                    ...(doj !== undefined ? { doj: doj ? new Date(doj) : undefined } : {}),
                 }
             });
         });
@@ -482,7 +527,7 @@ const addStaff = async (req, res) => {
 
 const addStudentManual = async (req, res) => {
     try {
-        const { name, email, regNo, batchId, deptId, admissionType, parentName, parentContact } = req.body;
+        const { name, email, regNo, batchId, deptId, admissionType } = req.body;
 
         if (!name || !email || !regNo || !batchId || !deptId) {
             const missing = [];
@@ -522,8 +567,18 @@ const addStudentManual = async (req, res) => {
                         name,
                         batchId,
                         admissionType: admissionType || 'Counseling',
-                        parentName: parentName || null,
-                        parentContact: parentContact || null,
+                        parentName: req.body.parentName || null,
+                        parentContact: req.body.parentContact || null,
+                        phone: req.body.phone || null,
+                        address: req.body.address || null,
+                        dob: req.body.dob ? new Date(req.body.dob) : null,
+                        gender: req.body.gender || null,
+                        bloodGroup: req.body.bloodGroup || null,
+                        religion: req.body.religion || null,
+                        city: req.body.city || null,
+                        boardingStatus: req.body.boardingStatus || null,
+                        profilePic: req.body.profilePic || null,
+                        doj: req.body.doj ? new Date(req.body.doj) : new Date(),
                         profileLocked: false
                     }
                 }
@@ -730,6 +785,43 @@ const getAnalytics = async (req, res) => {
     }
 };
 
+const updateFees = async (req, res) => {
+    try {
+        const { id } = req.params; // regNo
+        const { year, totalAmount, paidAmount, status } = req.body;
+
+        const existing = await prisma.fee.findFirst({
+            where: { regNo: id, year: parseInt(year) }
+        });
+
+        if (existing) {
+            const updated = await prisma.fee.update({
+                where: { id: existing.id },
+                data: {
+                    totalAmount: parseFloat(totalAmount),
+                    paidAmount: parseFloat(paidAmount),
+                    status: status || 'Pending'
+                }
+            });
+            return res.status(200).json(updated);
+        } else {
+            const created = await prisma.fee.create({
+                data: {
+                    regNo: id,
+                    year: parseInt(year),
+                    totalAmount: parseFloat(totalAmount),
+                    paidAmount: parseFloat(paidAmount),
+                    status: status || 'Pending'
+                }
+            });
+            return res.status(201).json(created);
+        }
+    } catch (error) {
+        console.error('Error updating fees:', error);
+        res.status(500).json({ error: 'Failed to update fees' });
+    }
+};
+
 const getBatches = async (req, res) => {
     try {
         const batches = await prisma.batch.findMany({
@@ -819,5 +911,7 @@ module.exports = {
     getBatches,
     addBatch,
     getDepartments,
-    addDepartment
+    addDepartment,
+    updateFees,
+    toggleProfileLock
 };

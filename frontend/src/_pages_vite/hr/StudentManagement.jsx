@@ -20,7 +20,9 @@ import {
     FilterX,
     ChevronRight,
     LayoutPanelLeft,
-    Pencil
+    Pencil,
+    Lock,
+    Unlock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -45,7 +47,12 @@ const StudentManagement = () => {
     // Edit Modal State
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingStudent, setEditingStudent] = useState(null);
-    const [editForm, setEditForm] = useState({ name: '', email: '', department: '', batch: '', admissionType: 'Counseling', parentContact: '' });
+    const [editForm, setEditForm] = useState({ 
+        name: '', email: '', department: '', batch: '', admissionType: 'Counseling', 
+        parentName: '', parentContact: '', 
+        phone: '', address: '', dob: '', gender: '', bloodGroup: '', religion: '', city: '', boardingStatus: 'Day Scholar',
+        profilePic: '', doj: ''
+    });
     const [editSubmitting, setEditSubmitting] = useState(false);
 
     // Fetch Students
@@ -121,6 +128,30 @@ const StudentManagement = () => {
         }
     });
 
+    // Profile Lock Mutation
+    const lockMutation = useMutation({
+        mutationFn: async ({ id }) => {
+            const res = await fetch(`${API_URL}/api/hr/students/${id}/lock-profile`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Lock update failed');
+            return res.json();
+        },
+        onSuccess: (data) => {
+            toast.success(data.message);
+            queryClient.invalidateQueries({ queryKey: ['students'] });
+        },
+        onError: () => {
+            toast.error('Failed to update profile access');
+        }
+    });
+
+    const handleToggleLock = (e, id) => {
+        e.stopPropagation();
+        lockMutation.mutate({ id });
+    };
+
     const handleToggleStatus = (id, name, currentStatus) => {
         const actionStr = currentStatus === 'Active' ? 'deactivate' : 'activate';
         if (!window.confirm(`Are you sure you want to ${actionStr} ${name}?`)) return;
@@ -137,10 +168,21 @@ const StudentManagement = () => {
         setEditForm({
             name: student.name || '',
             email: student.email || '',
-            department: student.department || (departments.length > 0 ? departments[0].id : ''),
+            department: student.department || student.user?.deptId || '',
             batch: student.batch || '',
             admissionType: student.admissionType || 'Counseling',
-            parentContact: student.parentContact || ''
+            parentName: student.parentName || '',
+            parentContact: student.parentContact || '',
+            phone: student.phone || '',
+            address: student.address || '',
+            dob: student.dob ? new Date(student.dob).toISOString().split('T')[0] : '',
+            gender: student.gender || '',
+            bloodGroup: student.bloodGroup || '',
+            religion: student.religion || '',
+            city: student.city || '',
+            boardingStatus: student.boardingStatus || 'Day Scholar',
+            profilePic: student.profilePic || '',
+            doj: student.doj ? new Date(student.doj).toISOString().split('T')[0] : ''
         });
         setIsEditModalOpen(true);
     };
@@ -275,8 +317,19 @@ const StudentManagement = () => {
                                                     navigate(`/hr/student/${student.id}`);
                                                 }} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group">
                                                     <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{student.name}</div>
-                                                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{student.regNo}</div>
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 shrink-0">
+                                                                {student.profilePic ? (
+                                                                    <img src={student.profilePic} alt={student.name} className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    <Users className="w-5 h-5 text-slate-400" />
+                                                                )}
+                                                            </div>
+                                                            <div>
+                                                                <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{student.name}</div>
+                                                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{student.regNo}</div>
+                                                            </div>
+                                                        </div>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{student.department}</div>
@@ -291,6 +344,13 @@ const StudentManagement = () => {
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4 text-right border-l border-gray-50 dark:border-slate-800 flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                                                        <button
+                                                            onClick={(e) => handleToggleLock(e, student.id)}
+                                                            className={`p-2 rounded-lg transition-colors ${student.profileLocked ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20' : 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'}`}
+                                                            title={student.profileLocked ? 'Grant profile edit access' : 'Revoke profile edit access'}
+                                                        >
+                                                            {student.profileLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                                                        </button>
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -338,75 +398,111 @@ const StudentManagement = () => {
                         </div>
                         <div className="p-6 overflow-y-auto">
                             <form id="edit-student-form" onSubmit={handleEditSubmit} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Full Name</label>
-                                    <input
-                                        type="text"
-                                        value={editForm.name}
-                                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                                        required
-                                        className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Email Address</label>
-                                    <input
-                                        type="email"
-                                        value={editForm.email}
-                                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                                        required
-                                        className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none"
-                                    />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Department</label>
-                                        <select
-                                            value={editForm.department}
-                                            onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
-                                            className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none"
-                                        >
-                                            <option value="">Select Department</option>
-                                            {departments.map(d => <option key={d.id} value={d.id}>{d.id}</option>)}
-                                        </select>
+                                <div className="space-y-6">
+                                    {/* Section 1: Identity & Enrollment */}
+                                    <div className="space-y-4">
+                                        <h4 className="text-sm font-bold text-primary uppercase tracking-wider border-b border-gray-100 dark:border-slate-800 pb-1">1. Identity & Enrollment</h4>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="col-span-2">
+                                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Full Name</label>
+                                                <input type="text" value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none" required />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Email</label>
+                                                <input type="email" value={editForm.email} onChange={(e) => setEditForm({...editForm, email: e.target.value})} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none" required />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Date of Joining</label>
+                                                <input type="date" value={editForm.doj} onChange={(e) => setEditForm({...editForm, doj: e.target.value})} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Department</label>
+                                                <select value={editForm.department} onChange={(e) => setEditForm({...editForm, department: e.target.value})} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none">
+                                                    {departments.map(d => <option key={d.id} value={d.id}>{d.id}</option>)}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Batch</label>
+                                                <select value={editForm.batch} onChange={(e) => setEditForm({...editForm, batch: e.target.value})} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none">
+                                                    {batches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Admission Type</label>
+                                                <select value={editForm.admissionType} onChange={(e) => setEditForm({...editForm, admissionType: e.target.value})} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none">
+                                                    <option value="Counseling">Counseling</option>
+                                                    <option value="Management">Management</option>
+                                                    <option value="Lateral Entry">Lateral Entry</option>
+                                                    <option value="Transfer">Transfer</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Profile Pic URL</label>
+                                                <input type="text" value={editForm.profilePic} onChange={(e) => setEditForm({...editForm, profilePic: e.target.value})} placeholder="https://..." className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Batch</label>
-                                        <select
-                                            value={editForm.batch}
-                                            onChange={(e) => setEditForm({ ...editForm, batch: e.target.value })}
-                                            className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none"
-                                        >
-                                            <option value="">Select Batch</option>
-                                            {batches.map(b => (
-                                                <option key={b.id} value={b.id}>{b.name}</option>
-                                            ))}
-                                        </select>
+
+                                    {/* Section 2: Personal & Demographic */}
+                                    <div className="space-y-4">
+                                        <h4 className="text-sm font-bold text-primary uppercase tracking-wider border-b border-gray-100 dark:border-slate-800 pb-1">2. Personal & Demographic</h4>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Date of Birth</label>
+                                                <input type="date" value={editForm.dob} onChange={(e) => setEditForm({...editForm, dob: e.target.value})} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Gender</label>
+                                                <select value={editForm.gender} onChange={(e) => setEditForm({...editForm, gender: e.target.value})} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none">
+                                                    <option value="">Select</option>
+                                                    <option value="Male">Male</option>
+                                                    <option value="Female">Female</option>
+                                                    <option value="Other">Other</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Blood Group</label>
+                                                <input type="text" value={editForm.bloodGroup} onChange={(e) => setEditForm({...editForm, bloodGroup: e.target.value})} placeholder="O+" className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Religion</label>
+                                                <input type="text" value={editForm.religion} onChange={(e) => setEditForm({...editForm, religion: e.target.value})} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">City</label>
+                                                <input type="text" value={editForm.city} onChange={(e) => setEditForm({...editForm, city: e.target.value})} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Boarding Status</label>
+                                                <select value={editForm.boardingStatus} onChange={(e) => setEditForm({...editForm, boardingStatus: e.target.value})} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none">
+                                                    <option value="Hosteller">Hosteller</option>
+                                                    <option value="Day Scholar">Day Scholar</option>
+                                                </select>
+                                            </div>
+                                            <div className="col-span-2">
+                                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Student Phone</label>
+                                                <input type="tel" value={editForm.phone} onChange={(e) => setEditForm({...editForm, phone: e.target.value})} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                                            </div>
+                                            <div className="col-span-2">
+                                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Current Address</label>
+                                                <textarea value={editForm.address} onChange={(e) => setEditForm({...editForm, address: e.target.value})} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none" rows="2" />
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Admission Type</label>
-                                        <select
-                                            value={editForm.admissionType}
-                                            onChange={(e) => setEditForm({ ...editForm, admissionType: e.target.value })}
-                                            className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none"
-                                        >
-                                            <option value="Counseling">Counseling</option>
-                                            <option value="Management">Management</option>
-                                            <option value="Lateral Entry">Lateral Entry</option>
-                                            <option value="Transfer">Transfer</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Parent Contact</label>
-                                        <input
-                                            type="tel"
-                                            value={editForm.parentContact}
-                                            onChange={(e) => setEditForm({ ...editForm, parentContact: e.target.value })}
-                                            placeholder="Mobile number"
-                                            className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none"
-                                        />
+
+                                    {/* Section 3: Guardian Info */}
+                                    <div className="space-y-4">
+                                        <h4 className="text-sm font-bold text-primary uppercase tracking-wider border-b border-gray-100 dark:border-slate-800 pb-1">3. Guardian & Family</h4>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Guardian Name</label>
+                                                <input type="text" value={editForm.parentName} onChange={(e) => setEditForm({...editForm, parentName: e.target.value})} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Guardian Contact</label>
+                                                <input type="tel" value={editForm.parentContact} onChange={(e) => setEditForm({...editForm, parentContact: e.target.value})} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </form>

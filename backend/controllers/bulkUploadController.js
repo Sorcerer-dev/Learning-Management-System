@@ -41,6 +41,16 @@ const bulkUploadStudents = async (req, res) => {
                                 admissionType: (row.admissionType || row.AdmissionType || 'Counseling').toString().trim(),
                                 parentName: (row.parentName || row.ParentName || '').toString().trim() || null,
                                 parentContact: (row.parentContact || row.ParentContact || '').toString().trim() || null,
+                                phone: (row.phone || row.Phone || row.StudentPhone || '').toString().trim() || null,
+                                address: (row.address || row.Address || '').toString().trim() || null,
+                                dob: row.dob || row.DOB || row.DateOfBirth ? new Date(row.dob || row.DOB || row.DateOfBirth) : null,
+                                gender: (row.gender || row.Gender || '').toString().trim() || null,
+                                bloodGroup: (row.bloodGroup || row.BloodGroup || '').toString().trim() || null,
+                                religion: (row.religion || row.Religion || '').toString().trim() || null,
+                                city: (row.city || row.City || '').toString().trim() || null,
+                                boardingStatus: (row.boardingStatus || row.BoardingStatus || '').toString().trim() || null,
+                                profilePic: (row.profilePic || row.ProfilePic || '').toString().trim() || null,
+                                doj: row.doj || row.DOJ || row.DateOfJoining ? new Date(row.doj || row.DOJ || row.DateOfJoining) : new Date(),
                                 profileLocked: false
                             }
                         }

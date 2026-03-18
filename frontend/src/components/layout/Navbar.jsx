@@ -46,6 +46,7 @@ const Navbar = ({ toggleSidebar }) => {
                 </button>
 
                 {/* Search placeholder */}
+                {role !== 'hr' && (
                 <div className="hidden md:flex items-center text-gray-400 bg-gray-100 dark:bg-slate-800 rounded-lg px-3 py-2 w-64 lg:w-96 focus-within:ring-2 focus-within:ring-primary focus-within:bg-white dark:focus-within:bg-slate-700 transition-all">
                     <Search className="w-4 h-4 mr-2" />
                     <input
@@ -54,6 +55,7 @@ const Navbar = ({ toggleSidebar }) => {
                         className="bg-transparent border-none outline-none text-sm w-full text-gray-700 dark:text-gray-200"
                     />
                 </div>
+                )}
             </div>
 
             <div className="flex items-center space-x-4">

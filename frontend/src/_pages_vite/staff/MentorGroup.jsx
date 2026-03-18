@@ -3,6 +3,7 @@ import { useAuth } from '../../context/ThemeContext';
 import { FileText, Inbox, Users, Activity, Loader2, Phone } from 'lucide-react';
 import { toast } from 'sonner';
 import CounselingLogModal from './CounselingLogModal';
+import PerformanceModal from './PerformanceModal';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -11,6 +12,7 @@ const MentorGroup = () => {
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedStudent, setSelectedStudent] = useState(null);
+    const [performanceStudent, setPerformanceStudent] = useState(null);
 
     useEffect(() => {
         const fetchStudents = async () => {
@@ -132,13 +134,23 @@ const MentorGroup = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button
-                                                onClick={() => setSelectedStudent(student)}
-                                                className="inline-flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-bold text-primary hover:text-white bg-primary/5 hover:bg-primary border border-primary/20 hover:border-primary rounded-lg transition-colors cursor-pointer"
-                                            >
-                                                <FileText className="w-4 h-4" />
-                                                Counseling Log
-                                            </button>
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => setPerformanceStudent(student)}
+                                                    className="inline-flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-bold text-emerald-600 hover:text-white bg-emerald-50 hover:bg-emerald-600 border border-emerald-200 hover:border-emerald-600 rounded-lg transition-colors cursor-pointer"
+                                                    title="Record Marks & Attendance"
+                                                >
+                                                    <Activity className="w-4 h-4" />
+                                                    <span className="hidden sm:inline">Record</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => setSelectedStudent(student)}
+                                                    className="inline-flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-bold text-primary hover:text-white bg-primary/5 hover:bg-primary border border-primary/20 hover:border-primary rounded-lg transition-colors cursor-pointer"
+                                                >
+                                                    <FileText className="w-4 h-4" />
+                                                    <span className="hidden sm:inline">Counseling</span>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

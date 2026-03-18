@@ -33,7 +33,10 @@ const verifyToken = async (req, res, next) => {
 // The "Tag-Based" Gatekeeper
 const authorizeTag = (allowedTags) => {
     return (req, res, next) => {
-        if (!allowedTags.includes(req.user.tagAccess)) {
+        const userTags = req.user.tagAccess ? req.user.tagAccess.split(',').map(t => t.trim()) : [];
+        const hasAccess = userTags.some(tag => allowedTags.includes(tag));
+        
+        if (!hasAccess) {
             return res.status(403).json({
                 message: `Forbidden: This area is restricted to ${allowedTags.join(' or ')} only.`
             });

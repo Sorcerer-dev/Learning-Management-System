@@ -44,6 +44,7 @@ model StaffProfile {
   salary       Float?   // Restricted to HR/Principal
   doj          DateTime @default(now())
   deptId       String
+  designation  String?
   religion     String?
   city         String?
   boardingStatus String?
@@ -51,6 +52,12 @@ model StaffProfile {
   
   mentees      StudentProfile[] @relation("MentorRelation")
   advisedBatch StudentProfile[] @relation("AdvisorRelation")
+}
+
+model Department {
+  id        String   @id // e.g., 'CSE', 'ECE'
+  name      String
+  createdAt DateTime @default(now())
 }
 
 model Batch {

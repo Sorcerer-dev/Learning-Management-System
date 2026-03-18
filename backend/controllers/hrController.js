@@ -264,7 +264,17 @@ const getHRStats = async (req, res) => {
             prisma.user.count({ where: { userType: 'Student' } }),
             prisma.user.count({ where: { userType: 'Staff', status: 'Active' } }),
             prisma.user.count({ where: { status: 'Inactive' } }),
-            prisma.user.count({ where: { tagAccess: 'Admin', status: 'Active' } }),
+            prisma.user.count({ 
+                where: { 
+                    OR: [
+                        { tagAccess: { contains: 'Admin' } },
+                        { tagAccess: { contains: 'HR' } },
+                        { tagAccess: { contains: 'Dean' } },
+                        { tagAccess: { contains: 'Principal' } }
+                    ],
+                    status: 'Active' 
+                } 
+            }),
         ]);
 
         return res.status(200).json({
@@ -284,14 +294,17 @@ const getAllStaff = async (req, res) => {
         const { dept, designation } = req.query;
         let whereClause = {
             user: {
-                tagAccess: {
-                    notIn: ['Admin', 'HR', 'Dean', 'Principal']
-                }
+                AND: [
+                    { tagAccess: { not: { contains: 'Admin' } } },
+                    { tagAccess: { not: { contains: 'HR' } } },
+                    { tagAccess: { not: { contains: 'Dean' } } },
+                    { tagAccess: { not: { contains: 'Principal' } } }
+                ]
             }
         };
 
         if (dept) whereClause.deptId = dept;
-        if (designation) whereClause.user = { ...whereClause.user, tagAccess: designation };
+        if (designation) whereClause.user = { ...whereClause.user, tagAccess: { contains: designation } };
 
         const staffMembers = await prisma.staffProfile.findMany({
             where: whereClause,
@@ -304,16 +317,24 @@ const getAllStaff = async (req, res) => {
         });
 
         // Map to flat structure for the frontend table
-        const formattedStaff = staffMembers.map(staff => ({
-            id: staff.staffId,
-            name: staff.name,
-            email: staff.user?.email,
-            department: staff.deptId,
-            designation: staff.user?.tagAccess,
-            salary: staff.salary,
-            status: staff.user?.status,
-            phone: staff.phone
-        }));
+        const formattedStaff = staffMembers.map(staff => {
+            let category = 'Staff';
+            if (staff.user?.tagAccess?.includes('Admin')) category = 'Admin';
+            else if (staff.user?.tagAccess?.includes('HR')) category = 'HR';
+
+            return {
+                id: staff.staffId,
+                name: staff.name,
+                email: staff.user?.email,
+                department: staff.deptId,
+                designation: staff.designation || staff.user?.tagAccess,
+                category: category,
+                functionalTags: staff.designation ? staff.designation.split(',').map(s => s.trim()) : [],
+                salary: staff.salary,
+                status: staff.user?.status,
+                phone: staff.phone
+            };
+        });
 
         return res.status(200).json(formattedStaff);
     } catch (error) {
@@ -326,9 +347,12 @@ const getAllAdmins = async (req, res) => {
     try {
         const admins = await prisma.user.findMany({
             where: {
-                tagAccess: {
-                    in: ['Admin', 'HR', 'Dean', 'Principal']
-                }
+                OR: [
+                    { tagAccess: { contains: 'Admin' } },
+                    { tagAccess: { contains: 'HR' } },
+                    { tagAccess: { contains: 'Dean' } },
+                    { tagAccess: { contains: 'Principal' } }
+                ]
             },
             include: {
                 staffProfile: true
@@ -337,9 +361,12 @@ const getAllAdmins = async (req, res) => {
         });
 
         const formattedAdmins = admins.map(admin => ({
-            id: admin.id,
+            id: admin.staffProfile?.staffId || admin.id,
+            userId: admin.id,
             email: admin.email,
+            tagAccess: admin.tagAccess,
             role: admin.tagAccess,
+            designation: admin.staffProfile?.designation || admin.tagAccess,
             status: admin.status,
             name: admin.staffProfile?.name || 'Admin User',
             department: admin.staffProfile?.deptId || 'Admin Office',
@@ -385,10 +412,16 @@ const getStaffById = async (req, res) => {
 
 const addStaff = async (req, res) => {
     try {
-        const { name, email, staffId, deptId, designation, salary } = req.body;
+        const { name, email, staffId, deptId, designation, category, adminRoleName, functionalTags, salary } = req.body;
 
-        if (!name || !email || !staffId || !deptId || !designation) {
-            return res.status(400).json({ error: 'Missing required fields' });
+        if (!name || !email || !staffId || !deptId || !category) {
+            const missing = [];
+            if(!name) missing.push('name');
+            if(!email) missing.push('email');
+            if(!staffId) missing.push('staffId');
+            if(!deptId) missing.push('deptId');
+            if(!category) missing.push('category');
+            return res.status(400).json({ error: 'Missing required fields: ' + missing.join(', ') });
         }
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -400,13 +433,29 @@ const addStaff = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash('Welcome@123', 10);
 
+        // Calculate tagAccess based on category
+        let calculatedTagAccess = 'Staff'; // Default for 'Staff' category 
+        let calculatedDesignation = null;
+
+        if (req.body.category === 'Admin') {
+            calculatedTagAccess = 'Admin';
+            calculatedDesignation = req.body.adminRoleName; // e.g. Principal, Dean
+        } else if (req.body.category === 'HR') {
+            calculatedTagAccess = 'HR';
+            calculatedDesignation = 'HR';
+        } else if (req.body.category === 'Staff') {
+            const tags = Array.isArray(req.body.functionalTags) ? req.body.functionalTags : [];
+            calculatedTagAccess = tags.length > 0 ? `Staff,${tags.join(',')}` : 'Staff';
+            calculatedDesignation = tags.length > 0 ? tags.join(', ') : null;
+        }
+
         await prisma.$transaction(async (tx) => {
             const user = await tx.user.create({
                 data: {
                     email,
                     password: hashedPassword,
                     userType: 'Staff',
-                    tagAccess: designation, // HOD, Advisor, Mentor, etc.
+                    tagAccess: calculatedTagAccess,
                     deptId,
                     status: 'Active'
                 }
@@ -418,6 +467,7 @@ const addStaff = async (req, res) => {
                     userId: user.id,
                     name,
                     deptId,
+                    designation: calculatedDesignation,
                     salary: salary ? parseFloat(salary) : null
                 }
             });
@@ -435,7 +485,13 @@ const addStudentManual = async (req, res) => {
         const { name, email, regNo, batchId, deptId, admissionType, parentName, parentContact } = req.body;
 
         if (!name || !email || !regNo || !batchId || !deptId) {
-            return res.status(400).json({ error: 'Missing required fields' });
+            const missing = [];
+            if(!name) missing.push('name');
+            if(!email) missing.push('email');
+            if(!regNo) missing.push('regNo');
+            if(!batchId) missing.push('batchId');
+            if(!deptId) missing.push('deptId');
+            return res.status(400).json({ error: 'Missing required fields: ' + missing.join(', ') });
         }
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -485,7 +541,7 @@ const addStudentManual = async (req, res) => {
 const editStaff = async (req, res) => {
     try {
         const { id } = req.params; // staffId
-        const { name, email, deptId, designation, salary, phone } = req.body;
+        const { name, email, deptId, designation, category, functionalTags, adminRoleName, salary, phone } = req.body;
 
         const staff = await prisma.staffProfile.findUnique({
             where: { staffId: id },
@@ -496,6 +552,22 @@ const editStaff = async (req, res) => {
             return res.status(404).json({ error: 'Staff member not found' });
         }
 
+        // Calculate tagAccess based on category
+        let newTagAccess = undefined;
+        let newDesignation = undefined;
+
+        if (category === 'Admin') {
+            newTagAccess = 'Admin';
+            newDesignation = adminRoleName;
+        } else if (category === 'HR') {
+            newTagAccess = 'HR';
+            newDesignation = 'HR';
+        } else if (category === 'Staff') {
+            const tags = Array.isArray(functionalTags) ? functionalTags : [];
+            newTagAccess = tags.length > 0 ? `Staff,${tags.join(',')}` : 'Staff';
+            newDesignation = tags.length > 0 ? tags.join(', ') : null;
+        }
+
         // Update in a transaction: both the User and StaffProfile tables
         await prisma.$transaction(async (tx) => {
             // Update User fields (email, tagAccess/designation, deptId)
@@ -503,7 +575,7 @@ const editStaff = async (req, res) => {
                 where: { id: staff.userId },
                 data: {
                     ...(email && email !== staff.user.email ? { email } : {}),
-                    ...(designation ? { tagAccess: designation } : {}),
+                    ...(newTagAccess ? { tagAccess: newTagAccess } : {}),
                     ...(deptId ? { deptId } : {}),
                 }
             });
@@ -514,6 +586,7 @@ const editStaff = async (req, res) => {
                 data: {
                     ...(name ? { name } : {}),
                     ...(deptId ? { deptId } : {}),
+                    ...(newDesignation ? { designation: newDesignation } : {}),
                     ...(salary !== undefined ? { salary: salary ? parseFloat(salary) : null } : {}),
                     ...(phone !== undefined ? { phone: phone || null } : {}),
                 }
@@ -559,7 +632,7 @@ const deactivateStaff = async (req, res) => {
 
 const addAdmin = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, role, designation } = req.body;
 
         if (!name || !email) {
             return res.status(400).json({ error: 'Missing required fields' });
@@ -571,15 +644,29 @@ const addAdmin = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password || 'Welcome@123', 10);
+        const tagAccess = role === 'HR' ? 'HR' : 'Admin';
+        const defaultStaffId = `ADM-${Date.now()}`;
 
-        await prisma.user.create({
-            data: {
-                email,
-                password: hashedPassword,
-                userType: 'Staff',
-                tagAccess: 'Admin',
-                status: 'Active'
-            }
+        await prisma.$transaction(async (tx) => {
+            const user = await tx.user.create({
+                data: {
+                    email,
+                    password: hashedPassword,
+                    userType: 'Staff',
+                    tagAccess: tagAccess,
+                    status: 'Active'
+                }
+            });
+
+            await tx.staffProfile.create({
+                data: {
+                    staffId: defaultStaffId,
+                    userId: user.id,
+                    name: name,
+                    deptId: 'ADMIN',
+                    designation: designation || (tagAccess === 'HR' ? 'HR' : 'Administrator')
+                }
+            });
         });
 
         return res.status(201).json({ message: 'Admin added successfully' });
@@ -623,7 +710,10 @@ const getAnalytics = async (req, res) => {
         const staffMap = {};
         staffProfiles.forEach(s => {
             const dept = s.deptId;
-            const role = s.user?.tagAccess || 'Unknown';
+            let role = 'Staff';
+            if (s.user?.tagAccess?.includes('Admin')) role = 'Admin';
+            else if (s.user?.tagAccess?.includes('HR')) role = 'HR';
+            
             if (!staffMap[dept]) staffMap[dept] = { dept };
             staffMap[dept][role] = (staffMap[dept][role] || 0) + 1;
         });
@@ -675,6 +765,41 @@ const addBatch = async (req, res) => {
     }
 };
 
+const getDepartments = async (req, res) => {
+    try {
+        const departments = await prisma.department.findMany({
+            orderBy: { id: 'asc' }
+        });
+        return res.status(200).json(departments);
+    } catch (error) {
+        console.error('Error fetching departments:', error);
+        return res.status(500).json({ error: 'Failed to fetch departments' });
+    }
+};
+
+const addDepartment = async (req, res) => {
+    try {
+        const { id, name } = req.body;
+        if (!id || !name) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const existing = await prisma.department.findUnique({ where: { id: id.toUpperCase() } });
+        if (existing) {
+            return res.status(400).json({ error: 'Department already exists' });
+        }
+
+        const department = await prisma.department.create({
+            data: { id: id.toUpperCase(), name }
+        });
+
+        return res.status(201).json(department);
+    } catch (error) {
+        console.error('Error adding department:', error);
+        return res.status(500).json({ error: 'Failed to add department' });
+    }
+};
+
 module.exports = {
     bulkUploadStudents,
     getAllStudents,
@@ -692,5 +817,7 @@ module.exports = {
     getStaffById,
     getAllAdmins,
     getBatches,
-    addBatch
+    addBatch,
+    getDepartments,
+    addDepartment
 };

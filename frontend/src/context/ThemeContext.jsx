@@ -18,7 +18,9 @@ const decodeToken = (token) => {
 
 // Maps backend tagAccess to frontend routing/theme role
 const getRoleFromTag = (tagAccess) => {
+    if (!tagAccess) return 'student';
     const roleMap = {
+        'Admin': 'admin',
         'Dean': 'admin',
         'CoE': 'admin',
         'HR': 'hr',
@@ -27,8 +29,15 @@ const getRoleFromTag = (tagAccess) => {
         'Advisor': 'staff',
         'Student': 'student',
         'CR': 'student',
+        'Staff': 'staff'
     };
-    return roleMap[tagAccess] || 'student';
+    
+    // Process comma-separated tags
+    const tags = tagAccess.split(',').map(t => t.trim());
+    for (const tag of tags) {
+        if (roleMap[tag]) return roleMap[tag];
+    }
+    return 'student'; // Fallback
 };
 
 export function AuthProvider({ children }) {
@@ -36,6 +45,30 @@ export function AuthProvider({ children }) {
     const [token, setToken] = useState(() => localStorage.getItem('ums_token'));
     const [role, setRole] = useState(() => localStorage.getItem('ums_role') || 'student');
     const [loading, setLoading] = useState(true);
+    const [darkMode, setDarkMode] = useState(() => {
+        const saved = localStorage.getItem('ums_dark_mode');
+        if (saved !== null) return saved === 'true';
+        return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    });
+
+    // Apply dark mode class to HTML element
+    useEffect(() => {
+        const root = window.document.documentElement;
+        if (darkMode) {
+            root.classList.add('dark');
+        } else {
+            root.classList.remove('dark');
+        }
+    }, [darkMode]);
+
+    // Toggle dark mode
+    const toggleDarkMode = () => {
+        setDarkMode(prev => {
+            const newValue = !prev;
+            localStorage.setItem('ums_dark_mode', newValue);
+            return newValue;
+        });
+    };
 
     // Apply theme class instantly whenever role changes
     useEffect(() => {
@@ -147,7 +180,11 @@ export function AuthProvider({ children }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, role, setRole, loading, login, logout, refreshUser, isAuthenticated: !!token }}>
+        <AuthContext.Provider value={{
+            user, token, role, setRole, loading, login, logout, refreshUser,
+            isAuthenticated: !!token,
+            darkMode, toggleDarkMode
+        }}>
             {children}
         </AuthContext.Provider>
     );

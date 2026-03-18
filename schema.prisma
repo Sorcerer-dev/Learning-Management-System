@@ -95,6 +95,11 @@ model StudentProfile {
   advisor        StaffProfile? @relation("AdvisorRelation", fields: [advisorId], references: [staffId])
   
   admissionType  String   // 'Counseling', 'Management'
+  profilePic     String?
+  doj            DateTime @default(now())
+  
+  attendance     Attendance[]
+  fees           Fee[]
   marks          PermanentMark[]
   arrears        ArrearTransit[]
 }
@@ -104,6 +109,7 @@ model PermanentMark {
   regNo        String
   student      StudentProfile @relation(fields: [regNo], references: [regNo])
   subjectCode  String
+  markType     String
   semester     Int
   mark         Int
   passedYear   Int
@@ -118,4 +124,24 @@ model ArrearTransit {
   latestMark   Int
   attempts     Int      @default(1)
   isCleared    Boolean  @default(false)
+}
+
+model Attendance {
+  id           Int      @id @default(autoincrement())
+  regNo        String
+  student      StudentProfile @relation(fields: [regNo], references: [regNo])
+  semester     Int      // 1-8
+  percentage   Float
+  updatedAt    DateTime @updatedAt
+}
+
+model Fee {
+  id           Int      @id @default(autoincrement())
+  regNo        String
+  student      StudentProfile @relation(fields: [regNo], references: [regNo])
+  year         Int      // 1-4
+  totalAmount  Float
+  paidAmount   Float
+  status       String   // 'Paid', 'Partial', 'Pending'
+  updatedAt    DateTime @updatedAt
 }

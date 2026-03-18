@@ -20,7 +20,9 @@ const {
     getBatches,
     addBatch,
     getDepartments,
-    addDepartment
+    addDepartment,
+    updateFees,
+    toggleProfileLock
 } = require('../controllers/hrController');
 
 const router = express.Router();
@@ -98,6 +100,22 @@ router.put(
     verifyToken,
     authorizeTag(['HR', 'Admin']),
     editStudent
+);
+
+// PUT /api/hr/students/:id/fees — Update student fees
+router.put(
+    '/students/:id/fees',
+    verifyToken,
+    authorizeTag(['HR', 'Admin']),
+    updateFees
+);
+
+// PATCH /api/hr/students/:id/lock-profile — Toggle profile lock
+router.patch(
+    '/students/:id/lock-profile',
+    verifyToken,
+    authorizeTag(['HR', 'Admin']),
+    toggleProfileLock
 );
 
 // GET /api/hr/stats

@@ -6,12 +6,10 @@ const prisma = new PrismaClient();
 const completeProfile = async (req, res) => {
     try {
         const userId = req.user.id; // Set by verifyToken middleware
-        const { dob, gender, bloodGroup, parentContact, address, phone } = req.body;
-
-        // Validate required fields
-        if (!dob || !gender || !bloodGroup || !parentContact || !address) {
-            return res.status(400).json({ error: 'All fields are required.' });
-        }
+        const { 
+            dob, gender, bloodGroup, religion, city, boardingStatus,
+            parentName, parentContact, address, phone, profilePic 
+        } = req.body;
 
         // Find the student profile linked to this user
         const studentProfile = await prisma.studentProfile.findUnique({
@@ -23,32 +21,32 @@ const completeProfile = async (req, res) => {
         }
 
         if (studentProfile.profileLocked) {
-            return res.status(403).json({ error: 'Profile is already locked. Contact HR to make changes.' });
+            return res.status(403).json({ error: 'Profile is locked. Contact HR to make changes.' });
         }
 
-        // Update profile and LOCK it
+        // Update profile
         const updatedProfile = await prisma.studentProfile.update({
             where: { userId },
             data: {
-                dob: new Date(dob),
-                gender,
-                bloodGroup,
-                parentContact,
-                address,
-                phone: phone || null,
-                profileLocked: true  // 🔒 THE CRUCIAL BIT
+                ...(dob ? { dob: new Date(dob) } : {}),
+                ...(gender ? { gender } : {}),
+                ...(bloodGroup ? { bloodGroup } : {}),
+                ...(religion ? { religion } : {}),
+                ...(city ? { city } : {}),
+                ...(boardingStatus ? { boardingStatus } : {}),
+                ...(parentName ? { parentName } : {}),
+                ...(parentContact ? { parentContact } : {}),
+                ...(address ? { address } : {}),
+                ...(phone ? { phone } : {}),
+                ...(profilePic ? { profilePic } : {}),
+                // Note: We don't force lock here if it was already unlocked by HR
             }
         });
 
         return res.status(200).json({
-            message: 'Profile completed and locked successfully!',
-            profile: {
-                regNo: updatedProfile.regNo,
-                name: updatedProfile.name,
-                profileLocked: updatedProfile.profileLocked
-            }
+            message: 'Profile updated successfully!',
+            profile: updatedProfile
         });
-
     } catch (error) {
         console.error('Complete profile error:', error);
         return res.status(500).json({ error: 'Failed to update profile.' });

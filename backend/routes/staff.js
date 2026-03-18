@@ -1,6 +1,6 @@
 const express = require('express');
 const { verifyToken, authorizeTag } = require('../middleware/authMiddleware');
-const { getMyDepartmentStudents } = require('../controllers/staffController');
+const { getMyDepartmentStudents, updateMarks, updateAttendance } = require('../controllers/staffController');
 
 const router = express.Router();
 
@@ -11,6 +11,22 @@ router.get(
     verifyToken,
     authorizeTag(['HOD', 'Mentor', 'Advisor', 'Principal']),
     getMyDepartmentStudents
+);
+
+// POST /api/staff/students/:regNo/marks
+router.post(
+    '/students/:regNo/marks',
+    verifyToken,
+    authorizeTag(['HOD', 'Mentor', 'Advisor', 'Staff']),
+    updateMarks
+);
+
+// POST /api/staff/students/:regNo/attendance
+router.post(
+    '/students/:regNo/attendance',
+    verifyToken,
+    authorizeTag(['HOD', 'Mentor', 'Advisor', 'Staff']),
+    updateAttendance
 );
 
 module.exports = router;
